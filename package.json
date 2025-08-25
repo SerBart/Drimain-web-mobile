@@ -1,0 +1,22 @@
+{
+  "name": "drimain-web-mobile",
+  "version": "1.0.0",
+  "description": "DriMain Web Mobile Application",
+  "scripts": {
+    "gen:api": "openapi -i docs/openapi.yaml -o packages/api-client --useOptions --exportSchemas true --name DriMainApiClient",
+    "gen:api:check": "swagger-codegen validate -i docs/openapi.yaml"
+  },
+  "devDependencies": {
+    "openapi-typescript-codegen": "^0.29.0",
+    "@apidevtools/swagger-cli": "^4.0.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SerBart/Drimain-web-mobile.git"
+  },
+  "license": "MIT",
+  "author": "DriMain Development Team"
+}
