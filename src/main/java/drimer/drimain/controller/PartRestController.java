@@ -69,7 +69,17 @@ public class PartRestController {
     @PatchMapping("/{id}/ilosc")
     public PartDTO adjust(@PathVariable Long id, @RequestBody PartQuantityPatch patch) {
         Part p = partRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Part not found"));
-        p.setIlosc(p.getIlosc() + patch.getDelta());
+        
+        if (patch.getDelta() != null && patch.getValue() != null) {
+            throw new IllegalArgumentException("Cannot specify both delta and value");
+        } else if (patch.getDelta() != null) {
+            p.setIlosc(p.getIlosc() + patch.getDelta());
+        } else if (patch.getValue() != null) {
+            p.setIlosc(patch.getValue());
+        } else {
+            throw new IllegalArgumentException("Must specify either delta or value");
+        }
+        
         partRepository.save(p);
         return toDto(p);
     }

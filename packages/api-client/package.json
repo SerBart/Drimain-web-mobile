@@ -1,0 +1,30 @@
+{
+  "name": "@drimain/api-client",
+  "version": "1.0.0",
+  "description": "TypeScript client for DriMain API",
+  "main": "index.ts",
+  "types": "index.ts",
+  "files": [
+    "**/*.ts",
+    "!**/*.test.ts",
+    "!**/*.spec.ts"
+  ],
+  "keywords": [
+    "api-client",
+    "typescript",
+    "openapi",
+    "drimain"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SerBart/Drimain-web-mobile.git",
+    "directory": "packages/api-client"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^4.0.0 || ^5.0.0"
+  }
+}

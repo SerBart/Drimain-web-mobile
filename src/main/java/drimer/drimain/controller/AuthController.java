@@ -1,8 +1,10 @@
 package drimer.drimain.controller;
 
+import drimer.drimain.api.dto.AuthRequest;
+import drimer.drimain.api.dto.AuthResponse;
+import drimer.drimain.api.dto.UserInfo;
 import drimer.drimain.security.JwtService;
 import drimer.drimain.service.CustomUserDetailsService;
-import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,12 +41,21 @@ public class AuthController {
             );
             var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
             Map<String, Object> claims = new HashMap<>();
-            claims.put("roles", userDetails.getAuthorities()
-                    .stream().map(a -> a.getAuthority()).toList());
+            var roles = userDetails.getAuthorities()
+                    .stream().map(a -> a.getAuthority()).toList();
+            claims.put("roles", roles);
 
             String token = jwtService.generate(userDetails.getUsername(), claims);
+            
+            // Calculate expiresAt using the same logic as JwtService
+            Instant expiresAt = Instant.now().plus(jwtService.getTtlMinutes(), ChronoUnit.MINUTES);
 
-            return ResponseEntity.ok(new AuthResponse(token));
+            AuthResponse response = new AuthResponse();
+            response.setToken(token);
+            response.setExpiresAt(expiresAt);
+            response.setRoles(roles);
+
+            return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body("Bad credentials");
         }
@@ -56,20 +69,19 @@ public class AuthController {
         String token = authHeader.substring(7);
         try {
             String username = jwtService.extractUsername(token);
-            return ResponseEntity.ok(username);
+            
+            // Extract roles from token claims
+            var claims = jwtService.parseSigned(token).getPayload();
+            @SuppressWarnings("unchecked")
+            var roles = (java.util.List<String>) claims.get("roles");
+            
+            UserInfo userInfo = new UserInfo();
+            userInfo.setUsername(username);
+            userInfo.setRoles(roles != null ? roles : java.util.Collections.emptyList());
+            
+            return ResponseEntity.ok(userInfo);
         } catch (Exception ex) {
             return ResponseEntity.status(401).body("Invalid token");
         }
-    }
-
-    @Data
-    public static class AuthRequest {
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class AuthResponse {
-        private final String token;
     }
 }

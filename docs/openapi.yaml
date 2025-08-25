@@ -1,0 +1,1019 @@
+openapi: 3.0.3
+info:
+  title: DriMain API
+  description: |
+    DriMain application REST API specification.
+    
+    This API provides endpoints for managing repair reports (raporty), issues (zgloszenia), 
+    spare parts (czesci), and authentication.
+    
+    **Authentication**: Uses JWT Bearer tokens (variant B: single access token with expiresAt and roles).
+    Refresh tokens are not yet implemented (future enhancement).
+  version: 1.0.0
+  contact:
+    name: DriMain Development Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Simple health check endpoint returning service status
+      operationId: healthCheck
+      tags: [Health]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/auth/login:
+    post:
+      summary: User Login
+      description: Authenticate user with username and password, returns JWT token with expiration and roles
+      operationId: login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad credentials"
+
+  /api/auth/me:
+    get:
+      summary: Get Current User Info
+      description: Returns current authenticated user information including username and roles
+      operationId: getCurrentUser
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Invalid token"
+
+  /api/raporty:
+    get:
+      summary: List Repair Reports
+      description: Get paginated list of repair reports with optional filtering
+      operationId: listRaporty
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by report status
+          required: false
+          schema:
+            type: string
+            enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+        - name: maszynaId
+          in: query
+          description: Filter by machine ID
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: from
+          in: query
+          description: Filter by date from (inclusive)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: to
+          in: query
+          description: Filter by date to (inclusive)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-01-31"
+        - name: q
+          in: query
+          description: Full-text search query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: sort
+          in: query
+          description: Sorting criteria in format "field,direction" (e.g., "dataNaprawy,desc")
+          required: false
+          schema:
+            type: string
+            default: "dataNaprawy,desc"
+            example: "dataNaprawy,desc"
+      responses:
+        '200':
+          description: Paginated list of repair reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaportPage'
+
+    post:
+      summary: Create Repair Report
+      description: Create a new repair report
+      operationId: createRaport
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportCreateRequest'
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+
+  /api/raporty/{id}:
+    get:
+      summary: Get Repair Report
+      description: Get a specific repair report by ID
+      operationId: getRaport
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Repair report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Report not found
+
+    put:
+      summary: Update Repair Report
+      description: Update an existing repair report
+      operationId: updateRaport
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportUpdateRequest'
+      responses:
+        '200':
+          description: Report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Report not found
+
+    delete:
+      summary: Delete Repair Report
+      description: Delete a repair report
+      operationId: deleteRaport
+      tags: [Reports]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Report deleted successfully
+        '404':
+          description: Report not found
+
+  /api/zgloszenia:
+    get:
+      summary: List Issues
+      description: Get list of issues with optional filtering (no pagination)
+      operationId: listZgloszenia
+      tags: [Issues]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by issue status
+          required: false
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, ON_HOLD, DONE, REJECTED]
+        - name: typ
+          in: query
+          description: Filter by issue type
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Full-text search query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zgloszenie'
+
+    post:
+      summary: Create Issue
+      description: Create a new issue
+      operationId: createZgloszenie
+      tags: [Issues]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+      responses:
+        '201':
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+
+  /api/zgloszenia/{id}:
+    get:
+      summary: Get Issue
+      description: Get a specific issue by ID
+      operationId: getZgloszenie
+      tags: [Issues]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '404':
+          description: Issue not found
+
+    put:
+      summary: Update Issue
+      description: Update an existing issue
+      operationId: updateZgloszenie
+      tags: [Issues]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '404':
+          description: Issue not found
+
+    delete:
+      summary: Delete Issue
+      description: Delete an issue
+      operationId: deleteZgloszenie
+      tags: [Issues]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Issue deleted successfully
+        '404':
+          description: Issue not found
+
+  /api/czesci:
+    get:
+      summary: List Parts
+      description: Get list of spare parts with optional filtering
+      operationId: listParts
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: kat
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Full-text search query (name, code, category)
+          required: false
+          schema:
+            type: string
+        - name: belowMin
+          in: query
+          description: Filter parts with quantity below minimum threshold
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of spare parts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Part'
+
+    post:
+      summary: Create Part
+      description: Create a new spare part
+      operationId: createPart
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreateRequest'
+      responses:
+        '201':
+          description: Part created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+
+  /api/czesci/{id}:
+    get:
+      summary: Get Part
+      description: Get a specific spare part by ID
+      operationId: getPart
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Part details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '404':
+          description: Part not found
+
+    put:
+      summary: Update Part
+      description: Update an existing spare part
+      operationId: updatePart
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartUpdateRequest'
+      responses:
+        '200':
+          description: Part updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '404':
+          description: Part not found
+
+    delete:
+      summary: Delete Part
+      description: Delete a spare part
+      operationId: deletePart
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Part deleted successfully
+        '404':
+          description: Part not found
+
+  /api/czesci/{id}/ilosc:
+    patch:
+      summary: Adjust Part Quantity
+      description: |
+        Adjust part quantity using either relative delta or absolute value.
+        Use mutually exclusive delta (relative change) or value (absolute quantity).
+      operationId: adjustPartQuantity
+      tags: [Parts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartQuantityPatch'
+      responses:
+        '200':
+          description: Part quantity adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '400':
+          description: Invalid request (both delta and value specified, or neither)
+        '404':
+          description: Part not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token authentication. Include the token in the Authorization header as 'Bearer <token>'.
+        
+        **Note**: Refresh tokens are not yet implemented. This is variant B authentication with:
+        - Single access token
+        - expiresAt timestamp
+        - roles array
+        
+        Future enhancement will introduce refresh token support (variant A).
+
+  schemas:
+    AuthRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          format: password
+          example: "password123"
+
+    AuthResponse:
+      type: object
+      required: [token, expiresAt, roles]
+      properties:
+        token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresAt:
+          type: string
+          format: date-time
+          description: Token expiration timestamp in ISO 8601 format
+          example: "2025-01-15T14:30:00Z"
+        roles:
+          type: array
+          items:
+            type: string
+          description: User roles/authorities
+          example: ["ROLE_USER", "ROLE_ADMIN"]
+
+    UserInfo:
+      type: object
+      required: [username, roles]
+      properties:
+        username:
+          type: string
+          example: "admin"
+        roles:
+          type: array
+          items:
+            type: string
+          description: User roles/authorities
+          example: ["ROLE_USER", "ROLE_ADMIN"]
+
+    RaportStatus:
+      type: string
+      enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+      description: Repair report status
+
+    ZgloszenieStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, ON_HOLD, DONE, REJECTED]
+      description: Issue status
+
+    SimpleMaszynaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+          description: Machine name
+
+    SimpleOsobaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        imieNazwisko:
+          type: string
+          description: Person full name
+
+    PartUsage:
+      type: object
+      required: [partId, ilosc]
+      properties:
+        partId:
+          type: integer
+          format: int64
+          description: ID of the used part
+        ilosc:
+          type: integer
+          description: Quantity of parts used
+
+    Raport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maszyna:
+          $ref: '#/components/schemas/SimpleMaszynaDTO'
+        typNaprawy:
+          type: string
+          description: Type of repair
+        opis:
+          type: string
+          description: Repair description
+        status:
+          type: string
+          description: Report status as string (enum name)
+          example: "NOWY"
+        dataNaprawy:
+          type: string
+          format: date
+          description: Repair date
+          example: "2025-01-15"
+        czasOd:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: Start time in HH:mm:ss or HH:mm format
+          example: "09:30:00"
+        czasDo:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: End time in HH:mm:ss or HH:mm format
+          example: "11:45:00"
+        osoba:
+          $ref: '#/components/schemas/SimpleOsobaDTO'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+          description: Parts used in this repair
+
+    RaportCreateRequest:
+      type: object
+      required: [typNaprawy, opis]
+      properties:
+        maszynaId:
+          type: integer
+          format: int64
+          description: Machine ID
+        typNaprawy:
+          type: string
+          description: Type of repair
+        opis:
+          type: string
+          description: Repair description
+        osobaId:
+          type: integer
+          format: int64
+          description: Person ID who performed the repair
+        status:
+          type: string
+          description: Initial status (defaults to NOWY if not specified)
+          example: "NOWY"
+        dataNaprawy:
+          type: string
+          format: date
+          description: Repair date
+          example: "2025-01-15"
+        czasOd:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: Start time
+          example: "09:30:00"
+        czasDo:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: End time
+          example: "11:45:00"
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+          description: Parts used in this repair
+
+    RaportUpdateRequest:
+      type: object
+      properties:
+        typNaprawy:
+          type: string
+          description: Type of repair
+        opis:
+          type: string
+          description: Repair description
+        status:
+          type: string
+          description: Report status
+          example: "W_TOKU"
+        dataNaprawy:
+          type: string
+          format: date
+          description: Repair date
+        czasOd:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: Start time
+        czasDo:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: End time
+        maszynaId:
+          type: integer
+          format: int64
+          description: Machine ID
+        osobaId:
+          type: integer
+          format: int64
+          description: Person ID
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+          description: Parts used in this repair
+
+    RaportPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Raport'
+        pageable:
+          type: object
+          properties:
+            sort:
+              type: object
+              properties:
+                sorted:
+                  type: boolean
+                unsorted:
+                  type: boolean
+            pageNumber:
+              type: integer
+            pageSize:
+              type: integer
+            offset:
+              type: integer
+            unpaged:
+              type: boolean
+            paged:
+              type: boolean
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          type: object
+          properties:
+            sorted:
+              type: boolean
+            unsorted:
+              type: boolean
+        empty:
+          type: boolean
+
+    Zgloszenie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typ:
+          type: string
+          description: Issue type
+        imie:
+          type: string
+          description: Reporter first name
+        nazwisko:
+          type: string
+          description: Reporter last name
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+          description: Issue description
+        dataGodzina:
+          type: string
+          format: date-time
+          description: Issue timestamp in format yyyy-MM-dd'T'HH:mm (minute precision)
+          example: "2025-01-15T13:45"
+        hasPhoto:
+          type: boolean
+          description: Whether the issue has an associated photo
+
+    ZgloszenieCreateRequest:
+      type: object
+      required: [typ, imie, nazwisko, opis]
+      properties:
+        typ:
+          type: string
+          description: Issue type
+        imie:
+          type: string
+          description: Reporter first name
+        nazwisko:
+          type: string
+          description: Reporter last name
+        status:
+          type: string
+          description: Initial status (defaults to OPEN if not specified)
+          example: "OPEN"
+        opis:
+          type: string
+          description: Issue description
+        photoBase64:
+          type: string
+          description: Optional base64 encoded photo (future enhancement)
+
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+          description: Issue type
+        status:
+          type: string
+          description: Issue status
+          example: "IN_PROGRESS"
+        opis:
+          type: string
+          description: Issue description
+        photoBase64:
+          type: string
+          description: Optional base64 encoded photo (future enhancement)
+
+    Part:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+          description: Part name
+        kod:
+          type: string
+          description: Part code/SKU
+        kategoria:
+          type: string
+          description: Part category
+        ilosc:
+          type: integer
+          description: Current quantity in stock
+        minIlosc:
+          type: integer
+          description: Minimum quantity threshold
+        jednostka:
+          type: string
+          description: Unit of measurement
+
+    PartCreateRequest:
+      type: object
+      required: [nazwa]
+      properties:
+        nazwa:
+          type: string
+          description: Part name
+        kod:
+          type: string
+          description: Part code/SKU
+        kategoria:
+          type: string
+          description: Part category
+        ilosc:
+          type: integer
+          description: Initial quantity in stock
+        minIlosc:
+          type: integer
+          description: Minimum quantity threshold
+        jednostka:
+          type: string
+          description: Unit of measurement
+
+    PartUpdateRequest:
+      type: object
+      properties:
+        nazwa:
+          type: string
+          description: Part name
+        kod:
+          type: string
+          description: Part code/SKU
+        kategoria:
+          type: string
+          description: Part category
+        minIlosc:
+          type: integer
+          description: Minimum quantity threshold
+        jednostka:
+          type: string
+          description: Unit of measurement
+
+    PartQuantityPatch:
+      type: object
+      description: |
+        Mutually exclusive delta or value for part quantity adjustment.
+        Use either delta (relative change) or value (absolute quantity), but not both.
+      oneOf:
+        - type: object
+          required: [delta]
+          properties:
+            delta:
+              type: integer
+              description: Relative quantity change (positive or negative)
+              example: -5
+          additionalProperties: false
+        - type: object
+          required: [value]
+          properties:
+            value:
+              type: integer
+              description: Absolute quantity to set
+              example: 25
+              minimum: 0
+          additionalProperties: false
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health check endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Reports
+    description: Repair report management
+  - name: Issues
+    description: Issue/problem reporting and tracking
+  - name: Parts
+    description: Spare parts inventory management
