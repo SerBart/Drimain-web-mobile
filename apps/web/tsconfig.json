@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/main/resources/static/*"],
+      "@/components/*": ["src/main/resources/static/components/*"],
+      "@/assets/*": ["src/main/resources/static/assets/*"],
+      "@drimain/core-domain": ["../../packages/core-domain/src"],
+      "@drimain/design-tokens": ["../../packages/design-tokens/src"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "src/main/resources/static/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "target",
+    "*.class"
+  ]
+}

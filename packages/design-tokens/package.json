@@ -1,0 +1,21 @@
+{
+  "name": "@drimain/design-tokens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared design tokens for Drimain applications",
+  "main": "dist/tokens.css",
+  "exports": {
+    "./dist/tokens.css": "./dist/tokens.css",
+    "./tokens": "./src/tokens.js"
+  },
+  "scripts": {
+    "build": "node src/build-tokens.js",
+    "dev": "node src/build-tokens.js --watch",
+    "lint": "echo 'TODO: Add CSS linting'",
+    "test": "echo 'TODO: Add tests'"
+  },
+  "files": [
+    "dist/",
+    "src/"
+  ]
+}
