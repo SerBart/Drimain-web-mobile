@@ -40,5 +40,10 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
-### API Client ###
-api-client/
+### API Client Generated Files ###
+api-client/models/
+api-client/services/
+api-client/core/
+# Keep placeholder files
+!api-client/README.md
+!api-client/index.ts
