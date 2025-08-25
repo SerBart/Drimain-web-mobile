@@ -1,0 +1,11 @@
+{
+  "name": "drimain-web-mobile",
+  "version": "1.0.0",
+  "description": "DriMain web mobile application",
+  "scripts": {
+    "gen:api": "openapi -i docs/openapi.yaml -o api-client --useOptions --exportSchemas"
+  },
+  "devDependencies": {
+    "openapi-typescript-codegen": "^0.25.0"
+  }
+}

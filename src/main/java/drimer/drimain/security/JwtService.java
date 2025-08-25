@@ -100,4 +100,8 @@ public class JwtService {
             return false;
         }
     }
+
+    public long getTtlMinutes() {
+        return ttlMinutes;
+    }
 }
