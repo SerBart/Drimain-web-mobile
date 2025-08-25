@@ -1,0 +1,21 @@
+{
+  "name": "@drimain/api-client",
+  "version": "0.1.0",
+  "description": "Generated API client for Drimain API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "openapi:generate": "openapi-generator-cli generate -i ../../openapi.yaml -g typescript-axios -o src/generated --additional-properties=npmName=@drimain/api-client-generated,supportsES6=true,withNodeImports=true,typescriptThreePlus=true",
+    "build": "tsc",
+    "test": "node --test src/generated.test.cjs",
+    "lint": "echo 'Lint not configured yet'"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.8.0",
+    "typescript": "^5.2.0",
+    "@types/node": "^20.0.0"
+  }
+}
