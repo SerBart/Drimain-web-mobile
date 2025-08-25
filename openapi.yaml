@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: Drimain API
+  version: 0.1.0
+  description: Minimalny zestaw endpointów startowych do unifikacji web + mobile.
+servers:
+  - url: https://api.example.com
+    description: Production (placeholder)
+  - url: https://staging.api.example.com
+    description: Staging (placeholder)
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Serwer działa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /auth/register:
+    post:
+      summary: Rejestracja użytkownika
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                name:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Utworzono użytkownika i zwrócono tokeny
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, tokens]
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  tokens:
+                    $ref: '#/components/schemas/AuthTokens'
+        '400':
+          description: Nieprawidłowe dane wejściowe (np. email zajęty)
+  /auth/login:
+    post:
+      summary: Logowanie użytkownika
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Zalogowano
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Błędne dane logowania
+  /auth/refresh:
+    post:
+      summary: Odświeżenie tokenu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Nowy zestaw tokenów
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Refresh token nieważny
+  /auth/logout:
+    post:
+      summary: Wylogowanie (unieważnienie refresh tokenu)
+      responses:
+        '204':
+          description: Wylogowano
+  /users/me:
+    get:
+      summary: Dane zalogowanego użytkownika
+      responses:
+        '200':
+          description: Dane użytkownika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      summary: Częściowa aktualizacja danych użytkownika
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Zaktualizowano
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /profiles/me:
+    get:
+      summary: Mój profil
+      responses:
+        '200':
+          description: Profil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+    patch:
+      summary: Aktualizacja mojego profilu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateInput'
+      responses:
+        '200':
+          description: Zaktualizowano profil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+  /profiles/{userId}:
+    get:
+      summary: Podgląd profilu innego użytkownika
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profil użytkownika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProfile'
+        '404':
+          description: Nie znaleziono
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthTokens:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, tokenType]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Czas ważności accessToken w sekundach
+        tokenType:
+          type: string
+          example: Bearer
+    User:
+      type: object
+      required: [id, email, role, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/UserRole'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserRole:
+      type: string
+      enum: [user, admin]
+    UserStatus:
+      type: string
+      enum: [active, blocked]
+    Profile:
+      type: object
+      required: [userId, notifications, updatedAt]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        notifications:
+          $ref: '#/components/schemas/NotificationPrefs'
+        updatedAt:
+          type: string
+          format: date-time
+    PublicProfile:
+      allOf:
+        - $ref: '#/components/schemas/Profile'
+      description: Wersja profilu do odczytu dla innych użytkowników (może zostać ograniczona później)
+    NotificationPrefs:
+      type: object
+      required: [email, push]
+      properties:
+        email:
+          type: boolean
+        push:
+          type: boolean
+    ProfileUpdateInput:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        notifications:
+          $ref: '#/components/schemas/NotificationPrefs'
+security:
+  - bearerAuth: []

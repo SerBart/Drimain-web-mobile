@@ -1,0 +1,19 @@
+{
+  "name": "@drimain/web",
+  "version": "0.1.0",
+  "description": "Drimain web application",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Web dev server not configured yet'",
+    "build": "echo 'Web build not configured yet'",
+    "test": "echo 'Web tests not configured yet'",
+    "lint": "echo 'Web lint not configured yet'"
+  },
+  "dependencies": {
+    "@drimain/api-client": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0"
+  }
+}
