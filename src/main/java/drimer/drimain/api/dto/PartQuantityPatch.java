@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class PartQuantityPatch {
-    private Integer delta;
+    private Integer delta;  // For relative changes (+/-)
+    private Integer value;  // For absolute value setting
 }
