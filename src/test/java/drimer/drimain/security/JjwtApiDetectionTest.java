@@ -3,13 +3,13 @@ package drimer.drimain.security;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.Test;
-import org.testng.annotations.Test;
+
 import java.nio.charset.StandardCharsets;
 
 public class JjwtApiDetectionTest {
 
     @Test
-    void printApiVariant() throws Exception {
+    public void printApiVariant() throws Exception {
         var key = Keys.hmacShaKeyFor("ABCDEFGHIJKLMNOPQRSTUVWX1234567890!!".getBytes(StandardCharsets.UTF_8));
         boolean newApi;
         try {

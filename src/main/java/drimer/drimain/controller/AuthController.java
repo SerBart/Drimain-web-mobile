@@ -1,43 +1,75 @@
-package drimer.drimain.api.controller;
+package drimer.drimain.controller;
 
-import drimer.drimain.api.dto.AuthRequest;
-import drimer.drimain.api.dto.AuthResponse;
 import drimer.drimain.security.JwtService;
-import drimer.drimain.security.UserDetailsServiceImpl;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.*;
+import drimer.drimain.service.CustomUserDetailsService;
+import lombok.Data;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final UserDetailsServiceImpl userDetailsService;
     private final JwtService jwtService;
+    private final CustomUserDetailsService userDetailsService;
+
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtService jwtService,
+                          CustomUserDetailsService userDetailsService) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+    }
 
     @PostMapping("/login")
-    @ResponseStatus(HttpStatus.OK)
-    public AuthResponse login(@RequestBody AuthRequest req) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
-        );
-        UserDetails ud = (UserDetails) auth.getPrincipal();
-        var roles = ud.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList());
-        String token = jwtService.generate(ud.getUsername(), Map.of("roles", roles));
-        AuthResponse resp = new AuthResponse();
-        resp.setToken(token);
-        resp.setRoles(roles);
-        // Przybliżona data wygaśnięcia (dla uproszczenia +3600s)
-        resp.setExpiresAt(Instant.now().plusSeconds(3600));
-        return resp;
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("roles", userDetails.getAuthorities()
+                    .stream().map(a -> a.getAuthority()).toList());
+
+            String token = jwtService.generate(userDetails.getUsername(), claims);
+
+            return ResponseEntity.ok(new AuthResponse(token));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body("Bad credentials");
+        }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("No token");
+        }
+        String token = authHeader.substring(7);
+        try {
+            String username = jwtService.extractUsername(token);
+            return ResponseEntity.ok(username);
+        } catch (Exception ex) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+    }
+
+    @Data
+    public static class AuthRequest {
+        private String username;
+        private String password;
+    }
+
+    @Data
+    public static class AuthResponse {
+        private final String token;
     }
 }
