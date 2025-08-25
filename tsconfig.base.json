@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@drimain/core-domain": ["./packages/core-domain/src"],
+      "@drimain/design-tokens": ["./packages/design-tokens/src"],
+      "@drimain/core-domain/*": ["./packages/core-domain/src/*"],
+      "@drimain/design-tokens/*": ["./packages/design-tokens/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build"]
+}
