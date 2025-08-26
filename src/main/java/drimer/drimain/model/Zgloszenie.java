@@ -5,32 +5,47 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Encja zgłoszenia.
+ * Encja zgłoszenia - rozszerzona struktura zachowuje kompatybilność wstecz.
+ * Stare pola (typ, imie, nazwisko, dataGodzina) + nowe pola (tytul, dzial, autor).
  * Dodano metodę validate() używaną ręcznie w kontrolerze.
  * (Jeśli przejdziesz na Bean Validation, możesz usunąć validate() i dodać adnotacje @NotBlank itd.)
  */
 @Entity
+@Table(name = "zgloszenia")
 public class Zgloszenie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Przykładowe pola – możesz dodać adnotacje Bean Validation jeśli chcesz
+    // --- Stare pola dla kompatybilności wstecz ---
     private String typ;
     private String imie;
     private String nazwisko;
 
-    @Enumerated(EnumType.STRING)
-    private ZgloszenieStatus status;   // Możesz domyślnie ustawić NOWE / OPEN jeśli enum to przewiduje
-
-    @Column(length = 2000)
-    private String opis;
-
     @Column(name = "data_godzina")
     private LocalDateTime dataGodzina;
 
-    // --- Gettery / Settery ---
+    // --- Nowe pola dla nowej funkcjonalności ---
+    @Column(length = 200)
+    private String tytul;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dzial_id")
+    private Dzial dzial;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id")
+    private User autor;
+
+    // --- Status wspólny dla obu schematów ---
+    @Enumerated(EnumType.STRING)
+    private ZgloszenieStatus status;
+
+    @Column(length = 4000)
+    private String opis;
+
+    // --- Gettery / Settery dla starych pól ---
     public Long getId() {
         return id;
     }
@@ -63,6 +78,40 @@ public class Zgloszenie {
         this.nazwisko = nazwisko;
     }
 
+    public LocalDateTime getDataGodzina() {
+        return dataGodzina;
+    }
+
+    public void setDataGodzina(LocalDateTime dataGodzina) {
+        this.dataGodzina = dataGodzina;
+    }
+
+    // --- Gettery / Settery dla nowych pól ---
+    public String getTytul() {
+        return tytul;
+    }
+
+    public void setTytul(String tytul) {
+        this.tytul = tytul;
+    }
+
+    public Dzial getDzial() {
+        return dzial;
+    }
+
+    public void setDzial(Dzial dzial) {
+        this.dzial = dzial;
+    }
+
+    public User getAutor() {
+        return autor;
+    }
+
+    public void setAutor(User autor) {
+        this.autor = autor;
+    }
+
+    // --- Gettery / Settery wspólne ---
     public ZgloszenieStatus getStatus() {
         return status;
     }
@@ -79,16 +128,8 @@ public class Zgloszenie {
         this.opis = opis;
     }
 
-    public LocalDateTime getDataGodzina() {
-        return dataGodzina;
-    }
-
-    public void setDataGodzina(LocalDateTime dataGodzina) {
-        this.dataGodzina = dataGodzina;
-    }
-
     /**
-     * Ręczna walidacja – wywoływana w kontrolerze.
+     * Ręczna walidacja – wywoływana w kontrolerze (stary format).
      * Rzuca IllegalArgumentException jeśli coś jest niepoprawne.
      * Dostosuj reguły do realnych wymagań.
      */

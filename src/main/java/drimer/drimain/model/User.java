@@ -24,6 +24,10 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dzial_id")
+    private Dzial dzial;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -35,6 +39,9 @@ public class User implements UserDetails {
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
+
+    public Dzial getDzial() { return dzial; }
+    public void setDzial(Dzial dzial) { this.dzial = dzial; }
 
     public void addRole(Role role) { if (role != null) roles.add(role); }
     public void clearRoles() { roles.clear(); }
