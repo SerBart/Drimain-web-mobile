@@ -103,12 +103,21 @@ public class AdminController {
     @Autowired private RoleRepository roleRepository;
 
     @PostMapping("/add-user")
-    public String addUser(@ModelAttribute User newUser, @RequestParam String role) {
+    public String addUser(@ModelAttribute User newUser, @RequestParam String role, 
+                         @RequestParam(required = false) Long dzialId) {
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         newUser.clearRoles();
         Role r = roleRepository.findByName(role)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown role: " + role));
         newUser.addRole(r);
+        
+        // Set department if provided
+        if (dzialId != null) {
+            Dzial dzial = dzialRepository.findById(dzialId)
+                    .orElseThrow(() -> new IllegalArgumentException("Dział nie istnieje"));
+            newUser.setDzial(dzial);
+        }
+        
         userRepository.save(newUser);
         return "redirect:/admin";
     }
