@@ -1,0 +1,855 @@
+openapi: 3.0.3
+info:
+  title: DriMain API
+  description: Unified API for Web + Mobile clients with department-based access control
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      tags:
+        - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /api/auth/login:
+    post:
+      summary: Authenticate user and get JWT token
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+            examples:
+              admin:
+                summary: Admin login
+                value:
+                  username: "admin"
+                  password: "admin123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                admin_response:
+                  summary: Admin authentication response
+                  value:
+                    token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlJPTEVfQURNSU4iXX0.abc123"
+                    expiresAt: "2024-01-01T12:00:00Z"
+                    roles: ["ROLE_ADMIN"]
+                    deptId: 1
+                    deptName: "IT Department"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/me:
+    get:
+      summary: Get current user information
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+              examples:
+                admin_user:
+                  summary: Admin user info
+                  value:
+                    username: "admin"
+                    roles: ["ROLE_ADMIN"]
+                    departmentId: 1
+                    departmentName: "IT Department"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/raporty:
+    get:
+      summary: List raporty with pagination and filtering
+      tags:
+        - Raporty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/RaportStatus'
+        - name: maszynaId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: "dataNaprawy,desc"
+      responses:
+        '200':
+          description: List of raporty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaportPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create new raport
+      tags:
+        - Raporty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportCreateRequest'
+      responses:
+        '201':
+          description: Raport created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/raporty/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get raport by ID
+      tags:
+        - Raporty
+      responses:
+        '200':
+          description: Raport details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update raport
+      tags:
+        - Raporty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportUpdateRequest'
+      responses:
+        '200':
+          description: Raport updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete raport
+      tags:
+        - Raporty
+      responses:
+        '204':
+          description: Raport deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/zgloszenia:
+    get:
+      summary: List zgłoszenia with department-based filtering
+      description: |
+        Returns zgłoszenia based on user role:
+        - ADMIN/BIURO: can see all zgłoszenia
+        - Regular users: can only see zgłoszenia from their department
+      tags:
+        - Zgłoszenia
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ZgloszenieStatus'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: "createdAt,desc"
+      responses:
+        '200':
+          description: List of zgłoszenia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszeniePage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create new zgłoszenie
+      description: |
+        Creates a new zgłoszenie. Department assignment rules:
+        - ADMIN/BIURO: can specify dzialId or use their own department
+        - Regular users: forced to use their own department
+      tags:
+        - Zgłoszenia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+            examples:
+              basic:
+                summary: Basic zgłoszenie
+                value:
+                  tytul: "Problem with printer"
+                  opis: "The printer is not working properly and needs immediate attention"
+                  status: "NEW"
+      responses:
+        '201':
+          description: Zgłoszenie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/zgloszenia/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get zgłoszenie by ID
+      description: Access restricted to same department unless user has ADMIN/BIURO role
+      tags:
+        - Zgłoszenia
+      responses:
+        '200':
+          description: Zgłoszenie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+              examples:
+                sample:
+                  summary: Sample zgłoszenie
+                  value:
+                    id: 1
+                    tytul: "Network issue"
+                    opis: "Unable to access company network from workstation"
+                    status: "NEW"
+                    dzialId: 2
+                    dzialNazwa: "IT Support"
+                    autorUsername: "john.doe"
+                    createdAt: "2024-01-15T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update zgłoszenie
+      description: Access restricted to same department unless user has ADMIN/BIURO role
+      tags:
+        - Zgłoszenia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Zgłoszenie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete zgłoszenie
+      description: Access restricted to same department unless user has ADMIN/BIURO role
+      tags:
+        - Zgłoszenia
+      responses:
+        '204':
+          description: Zgłoszenie deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # TODO: Future parts endpoints (not yet implemented)
+  # /api/czesci:
+  #   get:
+  #     summary: List parts (TODO - not implemented)
+  #     tags:
+  #       - Parts
+  #     responses:
+  #       '501':
+  #         description: Not implemented yet
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/auth/login
+
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin123"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token
+          example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.abc123"
+        expiresAt:
+          type: string
+          format: date-time
+          description: Token expiration time
+          example: "2024-01-01T12:00:00Z"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ROLE_ADMIN"]
+        deptId:
+          type: integer
+          format: int64
+          description: Department ID (if assigned)
+          example: 1
+        deptName:
+          type: string
+          description: Department name (if assigned)
+          example: "IT Department"
+
+    UserInfo:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ROLE_ADMIN"]
+        departmentId:
+          type: integer
+          format: int64
+          description: User's department ID
+          example: 1
+        departmentName:
+          type: string
+          description: User's department name
+          example: "IT Department"
+
+    SimpleMaszynaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+
+    SimpleOsobaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        imieNazwisko:
+          type: string
+
+    PartUsage:
+      type: object
+      properties:
+        partId:
+          type: integer
+          format: int64
+        ilosc:
+          type: integer
+
+    Raport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        status:
+          $ref: '#/components/schemas/RaportStatus'
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+          example: "08:00"
+        czasDo:
+          type: string
+          example: "16:00"
+        maszyna:
+          $ref: '#/components/schemas/SimpleMaszynaDTO'
+        osoba:
+          $ref: '#/components/schemas/SimpleOsobaDTO'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+      example:
+        id: 1
+        typNaprawy: "Preventive maintenance"
+        opis: "Regular maintenance of conveyor belt system"
+        status: "ZAKONCZONE"
+        dataNaprawy: "2024-01-15"
+        czasOd: "08:00"
+        czasDo: "12:00"
+
+    RaportCreateRequest:
+      type: object
+      required:
+        - typNaprawy
+        - opis
+        - dataNaprawy
+      properties:
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        maszynaId:
+          type: integer
+          format: int64
+        osobaId:
+          type: integer
+          format: int64
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportUpdateRequest:
+      type: object
+      properties:
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        status:
+          $ref: '#/components/schemas/RaportStatus'
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        maszynaId:
+          type: integer
+          format: int64
+        osobaId:
+          type: integer
+          format: int64
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportStatus:
+      type: string
+      enum:
+        - NOWY
+        - W_TOKU
+        - OCZEKUJE_CZESCI
+        - ZAKONCZONE
+        - ANULOWANE
+
+    RaportPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/Raport'
+
+    # TODO: Parts schemas (not yet fully implemented)
+    Part:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        ilosc:
+          type: integer
+        minIlosc:
+          type: integer
+        jednostka:
+          type: string
+
+    PartQuantityPatch:
+      type: object
+      properties:
+        ilosc:
+          type: integer
+
+    Zgloszenie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tytul:
+          type: string
+        opis:
+          type: string
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        dzialId:
+          type: integer
+          format: int64
+        dzialNazwa:
+          type: string
+        autorUsername:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        # Legacy fields for backward compatibility
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+      example:
+        id: 1
+        tytul: "Server maintenance required"
+        opis: "The main server needs urgent maintenance due to performance issues"
+        status: "NEW"
+        dzialId: 1
+        dzialNazwa: "IT Department"
+        autorUsername: "john.doe"
+        createdAt: "2024-01-15T10:30:00Z"
+
+    ZgloszenieCreateRequest:
+      type: object
+      required:
+        - tytul
+        - opis
+      properties:
+        tytul:
+          type: string
+          minLength: 1
+        opis:
+          type: string
+          minLength: 10
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        dzialId:
+          type: integer
+          format: int64
+          description: Department ID (optional, will use user's department if not specified)
+        # Legacy fields for backward compatibility
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        tytul:
+          type: string
+        opis:
+          type: string
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        # Legacy fields for backward compatibility
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+
+    ZgloszenieStatus:
+      type: string
+      enum:
+        - NEW
+        - ACCEPTED
+        - REJECTED
+        - CLOSED
+      description: |
+        Status of zgłoszenie:
+        - NEW: Newly created
+        - ACCEPTED: Accepted for processing
+        - REJECTED: Rejected
+        - CLOSED: Closed/completed
+
+    ZgloszeniePage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/Zgloszenie'
+
+    Page:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {}
+        page:
+          type: integer
+          description: Current page number (0-based)
+        size:
+          type: integer
+          description: Page size
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          description: Total number of pages
+        first:
+          type: boolean
+          description: Whether this is the first page
+        last:
+          type: boolean
+          description: Whether this is the last page
+        numberOfElements:
+          type: integer
+          description: Number of elements in current page
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        status:
+          type: integer
+          description: HTTP status code
+      example:
+        error: "AccessDenied"
+        message: "Access denied to this resource"
+        timestamp: "2024-01-15T10:30:00Z"
+        status: 403
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "IllegalArgument"
+            message: "Invalid request parameters"
+            timestamp: "2024-01-15T10:30:00Z"
+            status: 400
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "AuthenticationFailed"
+            message: "Authentication required"
+            timestamp: "2024-01-15T10:30:00Z"
+            status: 401
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "AccessDenied"
+            message: "Access denied to this resource"
+            timestamp: "2024-01-15T10:30:00Z"
+            status: 403
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "NotFound"
+            message: "Resource not found"
+            timestamp: "2024-01-15T10:30:00Z"
+            status: 404
