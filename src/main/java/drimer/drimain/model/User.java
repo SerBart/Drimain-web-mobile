@@ -24,6 +24,11 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
+    // Department relationship for security scoping
+    @ManyToOne
+    @JoinColumn(name = "dzial_id")
+    private Dzial dzial;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -38,6 +43,9 @@ public class User implements UserDetails {
 
     public void addRole(Role role) { if (role != null) roles.add(role); }
     public void clearRoles() { roles.clear(); }
+
+    public Dzial getDzial() { return dzial; }
+    public void setDzial(Dzial dzial) { this.dzial = dzial; }
 
     // UserDetails
     @Override

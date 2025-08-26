@@ -27,6 +27,11 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/api/auth/**").permitAll()
+                        // A3: ROLE_BIURO has full edit/delete rights (same as ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/zgloszenia/**").hasAnyRole("ADMIN", "BIURO", "USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/zgloszenia/**").hasAnyRole("ADMIN", "BIURO", "USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/zgloszenia/**").hasAnyRole("ADMIN", "BIURO", "USER")
+                        .requestMatchers(HttpMethod.GET, "/api/zgloszenia/**").hasAnyRole("ADMIN", "BIURO", "USER")
                         .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
