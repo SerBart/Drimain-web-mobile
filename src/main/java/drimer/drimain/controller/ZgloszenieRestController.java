@@ -1,6 +1,7 @@
 package drimer.drimain.controller;
 
 import drimer.drimain.api.dto.*;
+import drimer.drimain.api.mapper.ZgloszenieMapper;
 import drimer.drimain.model.Zgloszenie; // TODO
 import drimer.drimain.model.enums.ZgloszenieStatus;
 import drimer.drimain.repository.ZgloszenieRepository; // TODO
@@ -61,7 +62,7 @@ public class ZgloszenieRestController {
     public ZgloszenieDTO create(@RequestBody ZgloszenieCreateRequest req) {
         Zgloszenie z = new Zgloszenie();
         ZgloszenieStatus mapped = ZgloszenieStatusMapper.map(req.getStatus());
-        z.setStatus(mapped != null ? mapped : ZgloszenieStatus.OPEN);
+        z.setStatus(mapped != null ? mapped : ZgloszenieStatus.NEW);
         z.setTyp(req.getTyp());
         z.setImie(req.getImie());
         z.setNazwisko(req.getNazwisko());
@@ -98,17 +99,7 @@ public class ZgloszenieRestController {
     }
 
     private ZgloszenieDTO toDto(Zgloszenie z) {
-        ZgloszenieDTO dto = new ZgloszenieDTO();
-        dto.setId(z.getId());
-        dto.setDataGodzina(z.getDataGodzina());
-        dto.setTyp(z.getTyp());
-        dto.setImie(z.getImie());
-        dto.setNazwisko(z.getNazwisko());
-        dto.setStatus(z.getStatus());
-        dto.setOpis(z.getOpis());
-        // Tymczasowo false – gdy dodasz zdjęcia, wylicz np. z.getPhotoPath() != null
-        dto.setHasPhoto(false);
-        return dto;
+        return ZgloszenieMapper.toDto(z);
     }
 
     // Proste klasy request (możesz dać do osobnego pakietu)

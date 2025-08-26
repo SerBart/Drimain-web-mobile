@@ -1,8 +1,12 @@
 package drimer.drimain.controller;
 
+import drimer.drimain.api.dto.AuthRequest;
+import drimer.drimain.api.dto.AuthResponse;
+import drimer.drimain.api.dto.UserInfo;
+import drimer.drimain.model.User;
 import drimer.drimain.security.JwtService;
 import drimer.drimain.service.CustomUserDetailsService;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,66 +14,84 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
 
-    public AuthController(AuthenticationManager authenticationManager,
-                          JwtService jwtService,
-                          CustomUserDetailsService userDetailsService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
-            var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+            
+            User user = (User) userDetailsService.loadUserByUsername(request.getUsername());
+            List<String> roles = user.getAuthorities()
+                    .stream().map(a -> a.getAuthority()).toList();
+            
             Map<String, Object> claims = new HashMap<>();
-            claims.put("roles", userDetails.getAuthorities()
-                    .stream().map(a -> a.getAuthority()).toList());
+            claims.put("roles", roles);
+            
+            // Add department information if available
+            if (user.getDzial() != null) {
+                claims.put("deptId", user.getDzial().getId());
+                claims.put("deptName", user.getDzial().getNazwa());
+            }
 
-            String token = jwtService.generate(userDetails.getUsername(), claims);
+            String token = jwtService.generate(user.getUsername(), claims);
+            Instant expiresAt = Instant.now().plus(jwtService.getTtlMinutes(), ChronoUnit.MINUTES);
 
-            return ResponseEntity.ok(new AuthResponse(token));
+            AuthResponse response = new AuthResponse();
+            response.setToken(token);
+            response.setExpiresAt(expiresAt);
+            response.setRoles(roles);
+            if (user.getDzial() != null) {
+                response.setDeptId(user.getDzial().getId());
+                response.setDeptName(user.getDzial().getNazwa());
+            }
+
+            return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Bad credentials");
+            throw new org.springframework.security.access.AccessDeniedException("Bad credentials");
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<UserInfo> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body("No token");
+            throw new org.springframework.security.access.AccessDeniedException("No token provided");
         }
         String token = authHeader.substring(7);
         try {
             String username = jwtService.extractUsername(token);
-            return ResponseEntity.ok(username);
+            var claims = jwtService.parseSigned(token).getPayload();
+            
+            UserInfo userInfo = new UserInfo();
+            userInfo.setUsername(username);
+            
+            @SuppressWarnings("unchecked")
+            List<String> roles = (List<String>) claims.get("roles");
+            userInfo.setRoles(roles);
+            
+            if (claims.get("deptId") != null) {
+                userInfo.setDepartmentId(((Number) claims.get("deptId")).longValue());
+                userInfo.setDepartmentName((String) claims.get("deptName"));
+            }
+            
+            return ResponseEntity.ok(userInfo);
         } catch (Exception ex) {
-            return ResponseEntity.status(401).body("Invalid token");
+            throw new org.springframework.security.access.AccessDeniedException("Invalid token");
         }
-    }
-
-    @Data
-    public static class AuthRequest {
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class AuthResponse {
-        private final String token;
     }
 }

@@ -10,4 +10,6 @@ public class AuthResponse {
     private String token;
     private Instant expiresAt;
     private List<String> roles;
+    private Long deptId;
+    private String deptName;
 }
