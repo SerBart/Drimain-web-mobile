@@ -4,10 +4,8 @@ import lombok.Data;
 
 @Data
 public class ZgloszenieCreateRequest {
-    private String typ;
-    private String imie;
-    private String nazwisko;
-    private String status;
+    private String tytul;
     private String opis;
-    private String photoBase64; // opcjonalnie
+    private String status; // Optional, defaults to NEW
+    private Long dzialId; // Optional, only for ADMIN/BIURO
 }

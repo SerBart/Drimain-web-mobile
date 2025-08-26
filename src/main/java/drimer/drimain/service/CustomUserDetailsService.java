@@ -28,4 +28,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .authorities(user.getRoles().stream().map(Role::getName).toArray(String[]::new))
                 .build();
     }
+
+    /**
+     * Get User entity by username for additional information
+     */
+    public User getUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
 }

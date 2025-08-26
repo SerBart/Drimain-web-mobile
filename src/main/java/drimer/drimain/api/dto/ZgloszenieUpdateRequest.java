@@ -4,8 +4,7 @@ import lombok.Data;
 
 @Data
 public class ZgloszenieUpdateRequest {
-    private String typ;
+    private String tytul;
     private String status;
     private String opis;
-    private String photoBase64; // opcjonalnie
 }

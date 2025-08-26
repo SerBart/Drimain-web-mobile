@@ -9,10 +9,10 @@ public final class ZgloszenieStatusMapper {
         if (raw == null || raw.isBlank()) return null;
         String v = raw.trim().toUpperCase();
         switch (v) {
-            case "NOWE": return ZgloszenieStatus.OPEN;
-            case "W_TOKU": case "WTOKU": return ZgloszenieStatus.IN_PROGRESS;
-            case "OCZEKUJE": case "HOLD": return ZgloszenieStatus.ON_HOLD;
-            case "ZAKONCZONE": case "DONE": return ZgloszenieStatus.DONE;
+            case "NOWE": return ZgloszenieStatus.NEW;
+            case "W_TOKU": case "WTOKU": return ZgloszenieStatus.ACCEPTED;
+            case "OCZEKUJE": case "HOLD": return ZgloszenieStatus.NEW; // Map to NEW for now
+            case "ZAKONCZONE": case "DONE": return ZgloszenieStatus.CLOSED;
             case "ODRZUCONE": case "REJECTED": return ZgloszenieStatus.REJECTED;
             default:
                 try { return ZgloszenieStatus.valueOf(v); } catch (Exception e) { return null; }

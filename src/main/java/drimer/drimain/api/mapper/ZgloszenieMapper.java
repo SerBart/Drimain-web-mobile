@@ -9,21 +9,28 @@ public final class ZgloszenieMapper {
     public static ZgloszenieDTO toDto(Zgloszenie z) {
         ZgloszenieDTO dto = new ZgloszenieDTO();
         dto.setId(z.getId());
-        dto.setTyp(z.getTyp());
-        dto.setImie(z.getImie());
-        dto.setNazwisko(z.getNazwisko());
-        dto.setStatus(z.getStatus());
+        dto.setTytul(z.getTytul());
         dto.setOpis(z.getOpis());
-        dto.setDataGodzina(z.getDataGodzina());
+        dto.setStatus(z.getStatus());
+        dto.setCreatedAt(z.getCreatedAt());
+        dto.setUpdatedAt(z.getUpdatedAt());
+        
+        if (z.getDzial() != null) {
+            dto.setDzialId(z.getDzial().getId());
+            dto.setDzialNazwa(z.getDzial().getNazwa());
+        }
+        
+        if (z.getAutor() != null) {
+            dto.setAutorUsername(z.getAutor().getUsername());
+        }
+        
         return dto;
     }
 
     public static void updateEntity(Zgloszenie z, ZgloszenieDTO dto) {
-        z.setTyp(dto.getTyp());
-        z.setImie(dto.getImie());
-        z.setNazwisko(dto.getNazwisko());
-        z.setStatus(dto.getStatus());
+        z.setTytul(dto.getTytul());
         z.setOpis(dto.getOpis());
-        z.setDataGodzina(dto.getDataGodzina());
+        z.setStatus(dto.getStatus());
+        // Note: department and author are not updated via DTO for security reasons
     }
 }

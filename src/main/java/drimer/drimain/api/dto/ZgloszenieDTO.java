@@ -6,44 +6,49 @@ import drimer.drimain.model.enums.ZgloszenieStatus;
 import java.time.LocalDateTime;
 
 /**
- * DTO dla encji Zgloszenie.
- * dataGodzina jako LocalDateTime – Jackson serializuje do ISO (konfiguracja domyślna) lub wg @JsonFormat.
+ * DTO dla encji Zgloszenie z informacjami o dziale i autorze.
  */
 public class ZgloszenieDTO {
 
     private Long id;
-    private String typ;
-    private String imie;
-    private String nazwisko;
-    private ZgloszenieStatus status;
+    private String tytul;
     private String opis;
+    private ZgloszenieStatus status;
+    private Long dzialId;
+    private String dzialNazwa;
+    private String autorUsername;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
-    private LocalDateTime dataGodzina;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdAt;
 
-    private boolean hasPhoto; // NOWE POLE
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime updatedAt;
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getTyp() { return typ; }
-    public void setTyp(String typ) { this.typ = typ; }
-
-    public String getImie() { return imie; }
-    public void setImie(String imie) { this.imie = imie; }
-
-    public String getNazwisko() { return nazwisko; }
-    public void setNazwisko(String nazwisko) { this.nazwisko = nazwisko; }
-
-    public ZgloszenieStatus getStatus() { return status; }
-    public void setStatus(ZgloszenieStatus status) { this.status = status; }
+    public String getTytul() { return tytul; }
+    public void setTytul(String tytul) { this.tytul = tytul; }
 
     public String getOpis() { return opis; }
     public void setOpis(String opis) { this.opis = opis; }
 
-    public LocalDateTime getDataGodzina() { return dataGodzina; }
-    public void setDataGodzina(LocalDateTime dataGodzina) { this.dataGodzina = dataGodzina; }
+    public ZgloszenieStatus getStatus() { return status; }
+    public void setStatus(ZgloszenieStatus status) { this.status = status; }
 
-    public boolean isHasPhoto() { return hasPhoto; }
-    public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }
+    public Long getDzialId() { return dzialId; }
+    public void setDzialId(Long dzialId) { this.dzialId = dzialId; }
+
+    public String getDzialNazwa() { return dzialNazwa; }
+    public void setDzialNazwa(String dzialNazwa) { this.dzialNazwa = dzialNazwa; }
+
+    public String getAutorUsername() { return autorUsername; }
+    public void setAutorUsername(String autorUsername) { this.autorUsername = autorUsername; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
