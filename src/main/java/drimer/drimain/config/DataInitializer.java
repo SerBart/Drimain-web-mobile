@@ -33,6 +33,7 @@ public class DataInitializer implements ApplicationRunner {
 
         Role adminRole = ensureRole("ROLE_ADMIN");
         Role userRole  = ensureRole("ROLE_USER");
+        Role biuroRole = ensureRole("ROLE_BIURO");
 
         // Użytkownik admin jeśli brak
         userRepository.findByUsername("admin").orElseGet(() -> {
