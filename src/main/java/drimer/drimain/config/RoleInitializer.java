@@ -17,7 +17,7 @@ public class RoleInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<String> base = List.of("ROLE_ADMIN","ROLE_USER","ROLE_MAGAZYN");
+        List<String> base = List.of("ROLE_ADMIN","ROLE_USER","ROLE_MAGAZYN","ROLE_BIURO");
         base.forEach(n ->
                 roleRepository.findByName(n).orElseGet(() -> roleRepository.save(new Role(n)))
         );
