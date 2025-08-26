@@ -1,0 +1,574 @@
+openapi: 3.0.1
+info:
+  title: DriMain API
+  description: Unified API for Web + Mobile clients
+  version: 0.2.1
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - auth
+      operationId: login
+      summary: Authenticate user and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/me:
+    get:
+      tags:
+        - auth
+      operationId: me
+      summary: Get current user information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/zgloszenia:
+    get:
+      tags:
+        - zgloszenia
+      operationId: listZgloszenia
+      summary: List zgloszenia with optional filtering
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: typ
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 25
+      responses:
+        '200':
+          description: List of zgloszenia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszeniePage'
+    post:
+      tags:
+        - zgloszenia
+      operationId: createZgloszenie
+      summary: Create new zgloszenie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+      responses:
+        '201':
+          description: Zgloszenie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/zgloszenia/{id}:
+    get:
+      tags:
+        - zgloszenia
+      operationId: getZgloszenie
+      summary: Get zgloszenie by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Zgloszenie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '404':
+          description: Zgloszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - zgloszenia
+      operationId: updateZgloszenie
+      summary: Update existing zgloszenie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Zgloszenie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Zgloszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - zgloszenia
+      operationId: deleteZgloszenie
+      summary: Delete zgloszenie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Zgloszenie deleted successfully
+        '404':
+          description: Zgloszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/raporty:
+    get:
+      tags:
+        - raporty
+      operationId: listRaporty
+      summary: List raporty with filtering and pagination
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: maszynaId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 25
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "dataNaprawy,desc"
+      responses:
+        '200':
+          description: Page of raporty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageRaportDTO'
+  /api/czesci:
+    get:
+      tags:
+        - parts
+      operationId: listParts
+      summary: List parts with optional filtering
+      parameters:
+        - name: kat
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: belowMin
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of parts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PartDTO'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    UserInfo:
+      type: object
+      properties:
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+    ZgloszenieDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          type: string
+          enum:
+            - OPEN
+            - IN_PROGRESS
+            - ON_HOLD
+            - DONE
+            - REJECTED
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+        hasPhoto:
+          type: boolean
+    ZgloszenieCreateRequest:
+      type: object
+      required:
+        - typ
+        - imie
+        - nazwisko
+        - opis
+      properties:
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          type: string
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          type: string
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+    ZgloszeniePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZgloszenieDTO'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    RaportDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maszyna:
+          $ref: '#/components/schemas/SimpleMaszynaDTO'
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        status:
+          type: string
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        osoba:
+          $ref: '#/components/schemas/SimpleOsobaDTO'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsageDTO'
+    PageRaportDTO:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RaportDTO'
+        number:
+          type: integer
+          format: int32
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    SimpleMaszynaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+    SimpleOsobaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        imieNazwisko:
+          type: string
+    PartUsageDTO:
+      type: object
+      properties:
+        partId:
+          type: integer
+          format: int64
+        ilosc:
+          type: integer
+          format: int32
+    PageableObject:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/SortObject'
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        direction:
+          type: string
+        nullHandling:
+          type: string
+        ascending:
+          type: boolean
+        property:
+          type: string
+        ignoreCase:
+          type: boolean
+    PartDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        ilosc:
+          type: integer
+          format: int32
+        minIlosc:
+          type: integer
+          format: int32
+        jednostka:
+          type: string

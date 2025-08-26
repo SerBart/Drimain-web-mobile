@@ -1,0 +1,37 @@
+{
+  "name": "drimain-api-client",
+  "version": "0.2.1",
+  "description": "TypeScript client for DriMain API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rimraf dist src/api",
+    "gen": "openapi --input ../docs/openapi.yaml --output ./src/api --client axios --useOptions",
+    "check:spec": "openapi --input ../docs/openapi.yaml --output ./temp --client axios && rm -rf temp",
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "openapi-typescript-codegen": "^0.29.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.0",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "keywords": [
+    "drimain",
+    "api",
+    "client",
+    "typescript"
+  ],
+  "author": "DriMain Team",
+  "license": "MIT"
+}
