@@ -1,0 +1,20 @@
+{
+  "name": "drimain-frontend",
+  "version": "0.3.0",
+  "description": "Frontend components for DriMain application",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'No build script configured'",
+    "start": "echo 'No start script configured'",
+    "test": "echo 'No test script configured'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": [
+    "drimain",
+    "zgłoszenia",
+    "maintenance"
+  ],
+  "author": "DriMain Team",
+  "license": "ISC"
+}

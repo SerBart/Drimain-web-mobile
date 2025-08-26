@@ -30,6 +30,40 @@ public class Zgloszenie {
     @Column(name = "data_godzina")
     private LocalDateTime dataGodzina;
 
+    // Audit fields (A2: Add createdAt & updatedAt)
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at") 
+    private LocalDateTime updatedAt;
+
+    // Department & Author Association (Task 2)
+    @ManyToOne
+    @JoinColumn(name = "dzial_id")
+    private Dzial dzial;
+
+    @ManyToOne
+    @JoinColumn(name = "autor_id")
+    private User autor;
+
+    
+    // --- JPA Lifecycle callbacks for audit fields ---
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        // Keep dataGodzina for backward compatibility, populate automatically
+        if (this.dataGodzina == null) {
+            this.dataGodzina = now;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // --- Gettery / Settery ---
     public Long getId() {
         return id;
@@ -85,6 +119,38 @@ public class Zgloszenie {
 
     public void setDataGodzina(LocalDateTime dataGodzina) {
         this.dataGodzina = dataGodzina;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Dzial getDzial() {
+        return dzial;
+    }
+
+    public void setDzial(Dzial dzial) {
+        this.dzial = dzial;
+    }
+
+    public User getAutor() {
+        return autor;
+    }
+
+    public void setAutor(User autor) {
+        this.autor = autor;
     }
 
     /**

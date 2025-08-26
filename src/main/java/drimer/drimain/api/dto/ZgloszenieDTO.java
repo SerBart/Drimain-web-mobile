@@ -21,6 +21,16 @@ public class ZgloszenieDTO {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataGodzina;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    private LocalDateTime updatedAt;
+
+    private Long dzialId;
+    private String dzialNazwa;
+    private String autorUsername;
+
     private boolean hasPhoto; // NOWE POLE
 
     public Long getId() { return id; }
@@ -43,6 +53,21 @@ public class ZgloszenieDTO {
 
     public LocalDateTime getDataGodzina() { return dataGodzina; }
     public void setDataGodzina(LocalDateTime dataGodzina) { this.dataGodzina = dataGodzina; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getDzialId() { return dzialId; }
+    public void setDzialId(Long dzialId) { this.dzialId = dzialId; }
+
+    public String getDzialNazwa() { return dzialNazwa; }
+    public void setDzialNazwa(String dzialNazwa) { this.dzialNazwa = dzialNazwa; }
+
+    public String getAutorUsername() { return autorUsername; }
+    public void setAutorUsername(String autorUsername) { this.autorUsername = autorUsername; }
 
     public boolean isHasPhoto() { return hasPhoto; }
     public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }

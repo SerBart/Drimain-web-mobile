@@ -15,6 +15,23 @@ public final class ZgloszenieMapper {
         dto.setStatus(z.getStatus());
         dto.setOpis(z.getOpis());
         dto.setDataGodzina(z.getDataGodzina());
+        dto.setCreatedAt(z.getCreatedAt());
+        dto.setUpdatedAt(z.getUpdatedAt());
+        
+        // Department info
+        if (z.getDzial() != null) {
+            dto.setDzialId(z.getDzial().getId());
+            dto.setDzialNazwa(z.getDzial().getNazwa());
+        }
+        
+        // Author info
+        if (z.getAutor() != null) {
+            dto.setAutorUsername(z.getAutor().getUsername());
+        }
+        
+        // TODO: implement photo detection logic
+        dto.setHasPhoto(false);
+        
         return dto;
     }
 
@@ -25,5 +42,7 @@ public final class ZgloszenieMapper {
         z.setStatus(dto.getStatus());
         z.setOpis(dto.getOpis());
         z.setDataGodzina(dto.getDataGodzina());
+        // Note: createdAt, updatedAt, dzial, and autor are managed separately
+        // and should not be updated via DTO mapping for security reasons
     }
 }

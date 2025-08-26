@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: DriMain API
+  description: Unified API for Web + Mobile clients
+  version: 0.3.0
+
+servers:
+  - url: /api
+    description: Local development server
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /zgloszenia:
+    get:
+      summary: List zgłoszenia with pagination
+      tags:
+        - Zgloszenia
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ZgloszenieStatusString'
+      responses:
+        '200':
+          description: List of zgłoszenia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszeniePage'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create new zgłoszenie
+      tags:
+        - Zgloszenia
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+      responses:
+        '201':
+          description: Zgłoszenie created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /zgloszenia/{id}:
+    get:
+      summary: Get single zgłoszenie
+      tags:
+        - Zgloszenia
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Zgłoszenie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '404':
+          description: Zgłoszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update zgłoszenie
+      tags:
+        - Zgloszenia
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Zgłoszenie updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZgloszenieDTO'
+        '404':
+          description: Zgłoszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete zgłoszenie
+      tags:
+        - Zgloszenia
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Zgłoszenie deleted
+        '404':
+          description: Zgłoszenie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    ZgloszenieStatus:
+      type: string
+      enum:
+        - OPEN
+        - IN_PROGRESS
+        - ON_HOLD
+        - DONE
+        - REJECTED
+
+    ZgloszenieStatusString:
+      type: string
+      description: Status filter - accepts enum values or legacy mappings (NOWE->OPEN, etc.)
+
+    ZgloszenieDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+          description: Legacy timestamp field for backward compatibility
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        dzialId:
+          type: integer
+          format: int64
+          nullable: true
+        dzialNazwa:
+          type: string
+          nullable: true
+        autorUsername:
+          type: string
+          nullable: true
+        hasPhoto:
+          type: boolean
+      required:
+        - id
+        - hasPhoto
+
+    ZgloszenieCreateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          type: string
+          description: Optional status (string form, defaults to OPEN)
+        opis:
+          type: string
+        dzialId:
+          type: integer
+          format: int64
+          description: Optional - used by ROLE_BIURO/ADMIN, ignored for ROLE_USER
+        photoBase64:
+          type: string
+          description: Optional base64 encoded photo
+      required:
+        - imie
+        - nazwisko
+        - opis
+
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        status:
+          type: string
+          description: Status string form
+        opis:
+          type: string
+        photoBase64:
+          type: string
+          description: Optional base64 encoded photo
+
+    ZgloszeniePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZgloszenieDTO'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+          description: Current page number (0-based)
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - size
+        - number
