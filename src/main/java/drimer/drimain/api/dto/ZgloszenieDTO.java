@@ -15,11 +15,25 @@ public class ZgloszenieDTO {
     private String typ;
     private String imie;
     private String nazwisko;
+    private String tytul; // New field
     private ZgloszenieStatus status;
     private String opis;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataGodzina;
+
+    // New auditing fields
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime updatedAt;
+
+    // New relation fields
+    private Long dzialId;
+    private String dzialNazwa;
+    private Long autorId;
+    private String autorUsername;
 
     private boolean hasPhoto; // NOWE POLE
 
@@ -35,6 +49,9 @@ public class ZgloszenieDTO {
     public String getNazwisko() { return nazwisko; }
     public void setNazwisko(String nazwisko) { this.nazwisko = nazwisko; }
 
+    public String getTytul() { return tytul; }
+    public void setTytul(String tytul) { this.tytul = tytul; }
+
     public ZgloszenieStatus getStatus() { return status; }
     public void setStatus(ZgloszenieStatus status) { this.status = status; }
 
@@ -43,6 +60,24 @@ public class ZgloszenieDTO {
 
     public LocalDateTime getDataGodzina() { return dataGodzina; }
     public void setDataGodzina(LocalDateTime dataGodzina) { this.dataGodzina = dataGodzina; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getDzialId() { return dzialId; }
+    public void setDzialId(Long dzialId) { this.dzialId = dzialId; }
+
+    public String getDzialNazwa() { return dzialNazwa; }
+    public void setDzialNazwa(String dzialNazwa) { this.dzialNazwa = dzialNazwa; }
+
+    public Long getAutorId() { return autorId; }
+    public void setAutorId(Long autorId) { this.autorId = autorId; }
+
+    public String getAutorUsername() { return autorUsername; }
+    public void setAutorUsername(String autorUsername) { this.autorUsername = autorUsername; }
 
     public boolean isHasPhoto() { return hasPhoto; }
     public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }

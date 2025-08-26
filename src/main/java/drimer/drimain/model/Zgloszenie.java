@@ -21,6 +21,9 @@ public class Zgloszenie {
     private String imie;
     private String nazwisko;
 
+    // Nowe pole tytul (opcjonalne)
+    private String tytul;
+
     @Enumerated(EnumType.STRING)
     private ZgloszenieStatus status;   // Możesz domyślnie ustawić NOWE / OPEN jeśli enum to przewiduje
 
@@ -29,6 +32,38 @@ public class Zgloszenie {
 
     @Column(name = "data_godzina")
     private LocalDateTime dataGodzina;
+
+    // Auditing fields
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    // Relations
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dzial_id")
+    private Dzial dzial;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id")
+    private User autor;
+
+    // JPA lifecycle methods
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        if (dataGodzina == null) {
+            dataGodzina = createdAt;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // --- Gettery / Settery ---
     public Long getId() {
@@ -85,6 +120,46 @@ public class Zgloszenie {
 
     public void setDataGodzina(LocalDateTime dataGodzina) {
         this.dataGodzina = dataGodzina;
+    }
+
+    public String getTytul() {
+        return tytul;
+    }
+
+    public void setTytul(String tytul) {
+        this.tytul = tytul;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Dzial getDzial() {
+        return dzial;
+    }
+
+    public void setDzial(Dzial dzial) {
+        this.dzial = dzial;
+    }
+
+    public User getAutor() {
+        return autor;
+    }
+
+    public void setAutor(User autor) {
+        this.autor = autor;
     }
 
     /**
