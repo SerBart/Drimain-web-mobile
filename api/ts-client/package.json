@@ -1,0 +1,30 @@
+{
+  "name": "@drimain/api-client",
+  "version": "0.3.0",
+  "description": "TypeScript client for Drimain API",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "drimain",
+    "api",
+    "client",
+    "typescript"
+  ],
+  "author": "Drimain Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
