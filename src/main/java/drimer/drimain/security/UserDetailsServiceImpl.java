@@ -1,7 +1,7 @@
 package drimer.drimain.security;
 
-import drimer.drimain.model.User; // TODO
-import drimer.drimain.repository.UserRepository; // TODO
+import drimer.drimain.model.User;
+import drimer.drimain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;

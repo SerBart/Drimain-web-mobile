@@ -7,9 +7,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Pomocnicze mapowanie enum -> etykieta do wyświetlenia (np. w Thymeleaf).
- * Możesz zastąpić to mechanizmem i18n (messages.properties),
- * wtedy wystarczy w widoku: #{status.harmonogram.PLANOWANE}
+ * Mapowanie enum -> etykieta do wyświetlenia.
  */
 public final class StatusLabelUtil {
 

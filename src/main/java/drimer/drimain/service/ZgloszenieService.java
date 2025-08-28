@@ -26,7 +26,6 @@ public class ZgloszenieService {
         z.setStatus(ZgloszenieStatus.valueOf(req.getStatus()));
         z.setOpis(req.getOpis());
         z.setDataGodzina(LocalDateTime.now());
-        // TODO: photoBase64 -> z.setPhoto(Base64.getDecoder().decode(req.getPhotoBase64()))
         return repo.save(z);
     }
 
