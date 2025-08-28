@@ -45,7 +45,6 @@ public class RaportService {
                 .orElseThrow(() -> new IllegalArgumentException("Raport not found"));
         applyUpdate(r, req);
         raportRepository.save(r);
-        // Reset użyć części – w prostym wariancie kasujemy i dodajemy ponownie
         if (req.getPartUsages() != null) {
             partUsageRepository.deleteAll(r.getPartUsages());
             savePartUsages(r, req.getPartUsages());
@@ -66,13 +65,10 @@ public class RaportService {
         raportRepository.deleteById(id);
     }
 
-    /* ================== PRIVATE ================== */
-
     private void applyCreate(Raport r, RaportCreateRequest req) {
         r.setTypNaprawy(req.getTypNaprawy());
         r.setOpis(req.getOpis());
 
-        // Status z mapowaniem – bezpieczny na null / stare nazwy
         RaportStatus mapped = RaportStatusMapper.map(req.getStatus());
         r.setStatus(mapped != null ? mapped : RaportStatus.NOWY);
 

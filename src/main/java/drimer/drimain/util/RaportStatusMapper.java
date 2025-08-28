@@ -9,11 +9,9 @@ import static java.util.Map.entry;
 
 /**
  * Mapowanie różnych wariantów tekstowych na RaportStatus.
- * Używa Map.ofEntries (dowolna liczba wpisów) zamiast Map.of (max 10 par).
  */
 public final class RaportStatusMapper {
 
-    // Słownik znormalizowanych kluczy -> enum
     private static final Map<String, RaportStatus> DIRECT = Map.ofEntries(
             entry("OTWARTY", RaportStatus.NOWY),
             entry("NOWY", RaportStatus.NOWY),
@@ -48,7 +46,6 @@ public final class RaportStatusMapper {
         RaportStatus mapped = DIRECT.get(normalized);
         if (mapped != null) return mapped;
 
-        // Ostateczna próba: ktoś mógł podać dokładną nazwę enuma
         try {
             return RaportStatus.valueOf(raw.trim().toUpperCase(Locale.ROOT));
         } catch (Exception ignored) {
@@ -57,12 +54,7 @@ public final class RaportStatusMapper {
     }
 
     /**
-     * Normalizacja:
-     * - trim & upper
-     * - transliteracja polskich znaków
-     * - zamiana spacji / myślników na podkreślenie
-     * - usunięcie znaków nie-alfa-numerycznych (poza _)
-     * - redukcja wielokrotnych podkreśleń
+     * Normalizacja tekstu: uppercase, transliteracja polskich znaków, zamiana spacji/myślników na podkreślenie.
      */
     private static String normalize(String in) {
         String s = in.trim().toUpperCase(Locale.ROOT)
@@ -75,9 +67,9 @@ public final class RaportStatusMapper {
                 .replace('Ż','Z')
                 .replace('Ź','Z');
 
-        s = s.replaceAll("[\\s\\-]+", "_");   // spacje / myślniki → _
-        s = s.replaceAll("[^A-Z0-9_]", "");    // wywal inne znaki
-        s = s.replaceAll("_+", "_");           // zredukuj wielokrotne _
+        s = s.replaceAll("[\\s\\-]+", "_");
+        s = s.replaceAll("[^A-Z0-9_]", "");
+        s = s.replaceAll("_+", "_");
         return s;
     }
 }

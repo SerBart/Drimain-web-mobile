@@ -1,8 +1,8 @@
 package drimer.drimain.controller;
 
 import drimer.drimain.api.dto.*;
-import drimer.drimain.model.Part; // TODO: encja części
-import drimer.drimain.repository.PartRepository; // TODO
+import drimer.drimain.model.Part;
+import drimer.drimain.repository.PartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

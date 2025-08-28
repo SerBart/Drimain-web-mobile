@@ -90,7 +90,6 @@ public class ZgloszenieRestController {
             z.setAutor(autor);
         }
         
-        // TODO: obsługa zdjęcia
         zgloszenieRepository.save(z);
         return ZgloszenieMapper.toDto(z);
     }
