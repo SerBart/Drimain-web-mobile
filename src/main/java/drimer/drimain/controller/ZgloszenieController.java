@@ -115,14 +115,6 @@ public class ZgloszenieController {
         zgloszenie.setOpis(form.getOpis());
         zgloszenie.setDataGodzina(dateTime);
 
-        try {
-            zgloszenie.validate(); // zakładam, że ta metoda istnieje w encji
-        } catch (IllegalArgumentException ex) {
-            prepareLists(model);
-            model.addAttribute("error", "Walidacja nie powiodła się: " + ex.getMessage());
-            return "zgloszenia";
-        }
-
         zgloszenieRepository.save(zgloszenie);
         return "redirect:/zgloszenia";
     }
