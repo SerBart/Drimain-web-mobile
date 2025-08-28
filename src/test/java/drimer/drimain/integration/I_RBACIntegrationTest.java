@@ -117,8 +117,8 @@ public class I_RBACIntegrationTest {
     }
 
     @Test
-    @DisplayName("I-RBAC-002: Should deny POST requests without authentication")
-    void shouldDenyPostRequestsWithoutAuthentication() throws Exception {
+    @DisplayName("I-RBAC-002: Should allow POST requests for zgloszenia creation (public endpoint)")
+    void shouldAllowPostRequestsForZgloszeniaCreation() throws Exception {
         ZgloszenieCreateRequest request = new ZgloszenieCreateRequest();
         request.setTytul("New Issue");
         request.setOpis("New description");
@@ -129,7 +129,7 @@ public class I_RBACIntegrationTest {
         mockMvc.perform(post("/api/zgloszenia")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isCreated());
     }
 
     @Test
