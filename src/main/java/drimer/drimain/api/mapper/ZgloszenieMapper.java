@@ -15,6 +15,7 @@ public final class ZgloszenieMapper {
         dto.setTytul(z.getTytul());
         dto.setStatus(z.getStatus());
         dto.setOpis(z.getOpis());
+        dto.setPriorytet(z.getPriorytet());
         dto.setDataGodzina(z.getDataGodzina());
         dto.setCreatedAt(z.getCreatedAt());
         dto.setUpdatedAt(z.getUpdatedAt());
@@ -39,6 +40,7 @@ public final class ZgloszenieMapper {
         z.setTytul(dto.getTytul());
         z.setStatus(dto.getStatus());
         z.setOpis(dto.getOpis());
+        z.setPriorytet(dto.getPriorytet());
         z.setDataGodzina(dto.getDataGodzina());
         // Note: createdAt/updatedAt are managed by @PrePersist/@PreUpdate
         // Note: relations should be handled in the controller/service layer

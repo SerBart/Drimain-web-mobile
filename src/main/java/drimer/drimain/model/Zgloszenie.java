@@ -1,13 +1,14 @@
 package drimer.drimain.model;
 
 import drimer.drimain.model.enums.ZgloszenieStatus;
+import drimer.drimain.model.enums.ZgloszeniePriorytet;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 
 /**
  * Encja zgłoszenia.
- * Dodano metodę validate() używaną ręcznie w kontrolerze.
- * (Jeśli przejdziesz na Bean Validation, możesz usunąć validate() i dodać adnotacje @NotBlank itd.)
+ * Używa Bean Validation zamiast ręcznej metody validate().
  */
 @Entity
 public class Zgloszenie {
@@ -16,9 +17,13 @@ public class Zgloszenie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Przykładowe pola – możesz dodać adnotacje Bean Validation jeśli chcesz
+    @NotBlank(message = "Typ jest wymagany")
     private String typ;
+    
+    @NotBlank(message = "Imię jest wymagane")
     private String imie;
+    
+    @NotBlank(message = "Nazwisko jest wymagane")
     private String nazwisko;
 
     // Nowe pole tytul (opcjonalne)
@@ -27,9 +32,17 @@ public class Zgloszenie {
     @Enumerated(EnumType.STRING)
     private ZgloszenieStatus status;   // Możesz domyślnie ustawić NOWE / OPEN jeśli enum to przewiduje
 
+    @NotBlank(message = "Opis jest wymagany")
+    @Size(min = 10, message = "Opis musi mieć co najmniej 10 znaków")
     @Column(length = 2000)
     private String opis;
+    
+    @NotNull(message = "Priorytet jest wymagany")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priorytet", nullable = false)
+    private ZgloszeniePriorytet priorytet;
 
+    @PastOrPresent(message = "Data i godzina nie może być w przyszłości")
     @Column(name = "data_godzina")
     private LocalDateTime dataGodzina;
 
@@ -57,6 +70,12 @@ public class Zgloszenie {
         updatedAt = now;
         if (dataGodzina == null) {
             dataGodzina = createdAt;
+        }
+        if (status == null) {
+            status = ZgloszenieStatus.OPEN;
+        }
+        if (priorytet == null) {
+            priorytet = ZgloszeniePriorytet.MEDIUM;
         }
     }
 
@@ -162,33 +181,11 @@ public class Zgloszenie {
         this.autor = autor;
     }
 
-    /**
-     * Ręczna walidacja – wywoływana w kontrolerze.
-     * Rzuca IllegalArgumentException jeśli coś jest niepoprawne.
-     * Dostosuj reguły do realnych wymagań.
-     */
-    public void validate() {
-        if (imie == null || imie.isBlank()) {
-            throw new IllegalArgumentException("Imię jest wymagane");
-        }
-        if (nazwisko == null || nazwisko.isBlank()) {
-            throw new IllegalArgumentException("Nazwisko jest wymagane");
-        }
-        if (typ == null || typ.isBlank()) {
-            throw new IllegalArgumentException("Typ jest wymagany");
-        }
-        if (opis == null || opis.isBlank()) {
-            throw new IllegalArgumentException("Opis jest wymagany");
-        }
-        if (opis.length() < 10) {
-            throw new IllegalArgumentException("Opis musi mieć co najmniej 10 znaków");
-        }
-        if (dataGodzina == null) {
-            throw new IllegalArgumentException("Data i godzina są wymagane");
-        }
-        // (opcjonalnie) zakaz dat z przyszłości / przeszłości:
-        // if (dataGodzina.isAfter(LocalDateTime.now().plusMinutes(5))) {
-        //     throw new IllegalArgumentException("Data/godzina nie może być w odległej przyszłości");
-        // }
+    public ZgloszeniePriorytet getPriorytet() {
+        return priorytet;
+    }
+
+    public void setPriorytet(ZgloszeniePriorytet priorytet) {
+        this.priorytet = priorytet;
     }
 }
