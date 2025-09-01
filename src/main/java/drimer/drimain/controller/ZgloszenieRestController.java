@@ -2,20 +2,16 @@ package drimer.drimain.controller;
 
 import drimer.drimain.api.dto.*;
 import drimer.drimain.api.mapper.ZgloszenieMapper;
-import drimer.drimain.model.Dzial;
-import drimer.drimain.model.User;
 import drimer.drimain.model.Zgloszenie;
 import drimer.drimain.model.enums.ZgloszenieStatus;
-import drimer.drimain.repository.DzialRepository;
-import drimer.drimain.repository.UserRepository;
 import drimer.drimain.repository.ZgloszenieRepository;
+import drimer.drimain.service.ZgloszenieCommandService;
 import drimer.drimain.util.ZgloszenieStatusMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,8 +22,7 @@ import java.util.stream.Collectors;
 public class ZgloszenieRestController {
 
     private final ZgloszenieRepository zgloszenieRepository;
-    private final DzialRepository dzialRepository;
-    private final UserRepository userRepository;
+    private final ZgloszenieCommandService commandService;
 
     @GetMapping
     public List<ZgloszenieDTO> list(@RequestParam Optional<String> status,
@@ -67,31 +62,8 @@ public class ZgloszenieRestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ZgloszenieDTO create(@RequestBody ZgloszenieCreateRequest req) {
-        Zgloszenie z = new Zgloszenie();
-        ZgloszenieStatus mapped = ZgloszenieStatusMapper.map(req.getStatus());
-        z.setStatus(mapped != null ? mapped : ZgloszenieStatus.OPEN);
-        z.setTyp(req.getTyp());
-        z.setImie(req.getImie());
-        z.setNazwisko(req.getNazwisko());
-        z.setTytul(req.getTytul());
-        z.setOpis(req.getOpis());
-        z.setDataGodzina(req.getDataGodzina() != null ? req.getDataGodzina() : LocalDateTime.now());
-        
-        // Handle relations
-        if (req.getDzialId() != null) {
-            Dzial dzial = dzialRepository.findById(req.getDzialId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dzial not found"));
-            z.setDzial(dzial);
-        }
-        if (req.getAutorId() != null) {
-            User autor = userRepository.findById(req.getAutorId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            z.setAutor(autor);
-        }
-        
-        // TODO: obsługa zdjęcia
-        zgloszenieRepository.save(z);
+    public ZgloszenieDTO create(@RequestBody ZgloszenieCreateRequest req, Authentication authentication) {
+        Zgloszenie z = commandService.create(req, authentication);
         return ZgloszenieMapper.toDto(z);
     }
 
@@ -103,32 +75,7 @@ public class ZgloszenieRestController {
             throw new SecurityException("Access denied. Admin or Biuro role required.");
         }
         
-        Zgloszenie z = zgloszenieRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Zgloszenie not found"));
-        
-        if (req.getTyp() != null) z.setTyp(req.getTyp());
-        if (req.getImie() != null) z.setImie(req.getImie());
-        if (req.getNazwisko() != null) z.setNazwisko(req.getNazwisko());
-        if (req.getTytul() != null) z.setTytul(req.getTytul());
-        if (req.getOpis() != null) z.setOpis(req.getOpis());
-        if (req.getStatus() != null) {
-            ZgloszenieStatus ms = ZgloszenieStatusMapper.map(req.getStatus());
-            if (ms != null) z.setStatus(ms);
-        }
-        
-        // Handle relations
-        if (req.getDzialId() != null) {
-            Dzial dzial = dzialRepository.findById(req.getDzialId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dzial not found"));
-            z.setDzial(dzial);
-        }
-        if (req.getAutorId() != null) {
-            User autor = userRepository.findById(req.getAutorId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            z.setAutor(autor);
-        }
-        
-        zgloszenieRepository.save(z);
+        Zgloszenie z = commandService.update(id, req, authentication);
         return ZgloszenieMapper.toDto(z);
     }
 
@@ -139,7 +86,7 @@ public class ZgloszenieRestController {
         if (!hasEditPermissions(authentication)) {
             throw new SecurityException("Access denied. Admin or Biuro role required.");
         }
-        zgloszenieRepository.deleteById(id);
+        commandService.delete(id, authentication);
     }
     
     /**
