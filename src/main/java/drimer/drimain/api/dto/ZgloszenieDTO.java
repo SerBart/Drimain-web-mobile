@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import drimer.drimain.model.enums.ZgloszenieStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * DTO dla encji Zgloszenie.
@@ -36,6 +37,10 @@ public class ZgloszenieDTO {
     private String autorUsername;
 
     private boolean hasPhoto; // NOWE POLE
+    
+    // Attachment information
+    private int attachmentCount;
+    private List<AttachmentDTO> attachments;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -81,4 +86,20 @@ public class ZgloszenieDTO {
 
     public boolean isHasPhoto() { return hasPhoto; }
     public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }
+
+    public int getAttachmentCount() {
+        return attachmentCount;
+    }
+
+    public void setAttachmentCount(int attachmentCount) {
+        this.attachmentCount = attachmentCount;
+    }
+
+    public List<AttachmentDTO> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<AttachmentDTO> attachments) {
+        this.attachments = attachments;
+    }
 }

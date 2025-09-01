@@ -3,6 +3,8 @@ package drimer.drimain.model;
 import drimer.drimain.model.enums.ZgloszenieStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encja zgłoszenia.
@@ -48,6 +50,10 @@ public class Zgloszenie {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autor_id")
     private User autor;
+
+    // Attachments relationship
+    @OneToMany(mappedBy = "zgloszenie", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Attachment> attachments = new ArrayList<>();
 
     // JPA lifecycle methods
     @PrePersist
@@ -160,6 +166,26 @@ public class Zgloszenie {
 
     public void setAutor(User autor) {
         this.autor = autor;
+    }
+
+    public List<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<Attachment> attachments) {
+        this.attachments = attachments;
+    }
+
+    // Helper method to add an attachment
+    public void addAttachment(Attachment attachment) {
+        attachments.add(attachment);
+        attachment.setZgloszenie(this);
+    }
+
+    // Helper method to remove an attachment
+    public void removeAttachment(Attachment attachment) {
+        attachments.remove(attachment);
+        attachment.setZgloszenie(null);
     }
 
     /**
