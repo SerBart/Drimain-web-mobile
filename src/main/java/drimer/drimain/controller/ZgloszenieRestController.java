@@ -5,19 +5,26 @@ import drimer.drimain.api.mapper.ZgloszenieMapper;
 import drimer.drimain.model.Dzial;
 import drimer.drimain.model.User;
 import drimer.drimain.model.Zgloszenie;
+import drimer.drimain.model.enums.ZgloszenieEventType;
 import drimer.drimain.model.enums.ZgloszenieStatus;
 import drimer.drimain.repository.DzialRepository;
 import drimer.drimain.repository.UserRepository;
 import drimer.drimain.repository.ZgloszenieRepository;
+import drimer.drimain.service.ZgloszenieCommandService;
+import drimer.drimain.service.ZgloszenieSSEService;
 import drimer.drimain.util.ZgloszenieStatusMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -28,6 +35,8 @@ public class ZgloszenieRestController {
     private final ZgloszenieRepository zgloszenieRepository;
     private final DzialRepository dzialRepository;
     private final UserRepository userRepository;
+    private final ZgloszenieCommandService commandService;
+    private final ZgloszenieSSEService sseService;
 
     @GetMapping
     public List<ZgloszenieDTO> list(@RequestParam Optional<String> status,
@@ -68,31 +77,7 @@ public class ZgloszenieRestController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ZgloszenieDTO create(@RequestBody ZgloszenieCreateRequest req) {
-        Zgloszenie z = new Zgloszenie();
-        ZgloszenieStatus mapped = ZgloszenieStatusMapper.map(req.getStatus());
-        z.setStatus(mapped != null ? mapped : ZgloszenieStatus.OPEN);
-        z.setTyp(req.getTyp());
-        z.setImie(req.getImie());
-        z.setNazwisko(req.getNazwisko());
-        z.setTytul(req.getTytul());
-        z.setOpis(req.getOpis());
-        z.setDataGodzina(req.getDataGodzina() != null ? req.getDataGodzina() : LocalDateTime.now());
-        
-        // Handle relations
-        if (req.getDzialId() != null) {
-            Dzial dzial = dzialRepository.findById(req.getDzialId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dzial not found"));
-            z.setDzial(dzial);
-        }
-        if (req.getAutorId() != null) {
-            User autor = userRepository.findById(req.getAutorId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            z.setAutor(autor);
-        }
-        
-        // TODO: obsługa zdjęcia
-        zgloszenieRepository.save(z);
-        return ZgloszenieMapper.toDto(z);
+        return commandService.create(req);
     }
 
     @PutMapping("/{id}")
@@ -103,33 +88,7 @@ public class ZgloszenieRestController {
             throw new SecurityException("Access denied. Admin or Biuro role required.");
         }
         
-        Zgloszenie z = zgloszenieRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Zgloszenie not found"));
-        
-        if (req.getTyp() != null) z.setTyp(req.getTyp());
-        if (req.getImie() != null) z.setImie(req.getImie());
-        if (req.getNazwisko() != null) z.setNazwisko(req.getNazwisko());
-        if (req.getTytul() != null) z.setTytul(req.getTytul());
-        if (req.getOpis() != null) z.setOpis(req.getOpis());
-        if (req.getStatus() != null) {
-            ZgloszenieStatus ms = ZgloszenieStatusMapper.map(req.getStatus());
-            if (ms != null) z.setStatus(ms);
-        }
-        
-        // Handle relations
-        if (req.getDzialId() != null) {
-            Dzial dzial = dzialRepository.findById(req.getDzialId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dzial not found"));
-            z.setDzial(dzial);
-        }
-        if (req.getAutorId() != null) {
-            User autor = userRepository.findById(req.getAutorId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            z.setAutor(autor);
-        }
-        
-        zgloszenieRepository.save(z);
-        return ZgloszenieMapper.toDto(z);
+        return commandService.update(id, req);
     }
 
     @DeleteMapping("/{id}")
@@ -139,7 +98,56 @@ public class ZgloszenieRestController {
         if (!hasEditPermissions(authentication)) {
             throw new SecurityException("Access denied. Admin or Biuro role required.");
         }
-        zgloszenieRepository.deleteById(id);
+        commandService.delete(id);
+    }
+
+    /**
+     * SSE endpoint dla strumienia zdarzeń zgłoszeń.
+     * Parametry zapytania:
+     * - types: lista typów eventów (CREATED,UPDATED,DELETED...)
+     * - dzialId: filtrowanie po ID działu
+     * - autorId: filtrowanie po ID autora
+     * - full: czy przesyłać pełne dane (true/false, domyślnie false)
+     */
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamEvents(@RequestParam(required = false) String types,
+                                 @RequestParam(required = false) Long dzialId,
+                                 @RequestParam(required = false) Long autorId,
+                                 @RequestParam(defaultValue = "false") boolean full,
+                                 Authentication authentication) {
+        // Sprawdź autoryzację
+        if (authentication == null) {
+            throw new SecurityException("Authentication required for SSE stream");
+        }
+
+        // Parsuj typy eventów
+        Set<ZgloszenieEventType> eventTypes = parseEventTypes(types);
+
+        // Stwórz subskrypcję
+        SseEmitter emitter = sseService.subscribe(eventTypes, dzialId, autorId, full);
+        
+        if (emitter == null) {
+            // Limit subskrypcji przekroczony
+            throw new IllegalStateException("Maximum number of SSE connections reached");
+        }
+
+        return emitter;
+    }
+
+    private Set<ZgloszenieEventType> parseEventTypes(String types) {
+        if (types == null || types.isEmpty()) {
+            return Set.of(); // pusty set = wszystkie typy
+        }
+        
+        Set<ZgloszenieEventType> result = new HashSet<>();
+        for (String type : types.split(",")) {
+            try {
+                result.add(ZgloszenieEventType.valueOf(type.trim().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Zignoruj niepoprawne typy
+            }
+        }
+        return result;
     }
     
     /**

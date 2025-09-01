@@ -26,3 +26,7 @@ app:
   jwt:
     secret: "REPLACE_WITH_STRONG_SECRET_AT_LEAST_32_CHARS_LONG_1234567890"
     ttl-seconds: 3600
+  sse:
+    max-clients: 100
+    timeout-minutes: 30
+    heartbeat-seconds: 15
