@@ -3,11 +3,9 @@ package drimer.drimain.api.exception;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.Instant;
-
 @Data
 @AllArgsConstructor
-public class ApiErrorResponse {
-    private Instant timestamp;
-    private ApiError error;
+public class ValidationErrorDetail {
+    private String field;
+    private String message;
 }

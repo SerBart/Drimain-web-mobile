@@ -12,5 +12,6 @@ public class ZgloszenieUpdateRequest {
     private String opis;
     private Long dzialId; // New field
     private Long autorId; // New field
+    private String priorytet; // New field for priority
     private String photoBase64; // opcjonalnie
 }

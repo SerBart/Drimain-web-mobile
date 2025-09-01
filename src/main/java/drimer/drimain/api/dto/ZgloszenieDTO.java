@@ -2,6 +2,7 @@ package drimer.drimain.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import drimer.drimain.model.enums.ZgloszenieStatus;
+import drimer.drimain.model.enums.ZgloszeniePriorytet;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +19,7 @@ public class ZgloszenieDTO {
     private String tytul; // New field
     private ZgloszenieStatus status;
     private String opis;
+    private ZgloszeniePriorytet priorytet; // New field for priority
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataGodzina;
@@ -81,4 +83,7 @@ public class ZgloszenieDTO {
 
     public boolean isHasPhoto() { return hasPhoto; }
     public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }
+
+    public ZgloszeniePriorytet getPriorytet() { return priorytet; }
+    public void setPriorytet(ZgloszeniePriorytet priorytet) { this.priorytet = priorytet; }
 }

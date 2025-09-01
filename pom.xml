@@ -109,6 +109,13 @@
 			</exclusions>
 		</dependency>
 
+		<!-- Spring Security Test for @WithMockUser and security testing -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- TestNG (bo masz org.testng.annotations) -->
 		<dependency>
 			<groupId>org.testng</groupId>

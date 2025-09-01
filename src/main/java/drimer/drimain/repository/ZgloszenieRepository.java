@@ -5,12 +5,13 @@ import drimer.drimain.model.enums.ZgloszenieStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface ZgloszenieRepository extends JpaRepository<Zgloszenie, Long> {
+public interface ZgloszenieRepository extends JpaRepository<Zgloszenie, Long>, JpaSpecificationExecutor<Zgloszenie> {
     
     // Find by status
     List<Zgloszenie> findByStatus(ZgloszenieStatus status);
@@ -28,7 +29,7 @@ public interface ZgloszenieRepository extends JpaRepository<Zgloszenie, Long> {
     List<Zgloszenie> findByAutorId(Long autorId);
     Page<Zgloszenie> findByAutorId(Long autorId, Pageable pageable);
     
-    // Complex search query
+    // Complex search query - kept for backward compatibility, but we'll use Specifications
     @Query("SELECT z FROM Zgloszenie z WHERE " +
            "(:status IS NULL OR z.status = :status) AND " +
            "(:typ IS NULL OR z.typ LIKE %:typ%) AND " +
