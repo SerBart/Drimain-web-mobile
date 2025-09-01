@@ -1,7 +1,10 @@
 package drimer.drimain.api.mapper;
 
+import drimer.drimain.api.dto.AttachmentDTO;
 import drimer.drimain.api.dto.ZgloszenieDTO;
 import drimer.drimain.model.Zgloszenie;
+
+import java.util.stream.Collectors;
 
 public final class ZgloszenieMapper {
     private ZgloszenieMapper() {}
@@ -27,6 +30,16 @@ public final class ZgloszenieMapper {
         if (z.getAutor() != null) {
             dto.setAutorId(z.getAutor().getId());
             dto.setAutorUsername(z.getAutor().getUsername());
+        }
+        
+        // Handle attachments
+        if (z.getAttachments() != null) {
+            dto.setAttachmentCount(z.getAttachments().size());
+            dto.setAttachments(z.getAttachments().stream()
+                .map(AttachmentMapper::toDto)
+                .collect(Collectors.toList()));
+        } else {
+            dto.setAttachmentCount(0);
         }
         
         return dto;
