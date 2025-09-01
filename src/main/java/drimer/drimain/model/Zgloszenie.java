@@ -1,8 +1,13 @@
 package drimer.drimain.model;
 
 import drimer.drimain.model.enums.ZgloszenieStatus;
+import drimer.drimain.model.enums.ZgloszeniePriorytet;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Encja zgłoszenia.
@@ -16,17 +21,34 @@ public class Zgloszenie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Przykładowe pola – możesz dodać adnotacje Bean Validation jeśli chcesz
+    // Przykładowe pola – dodane adnotacje Bean Validation
+    @NotBlank(message = "Typ jest wymagany")
+    @Size(max = 100, message = "Typ może mieć maksymalnie 100 znaków")
     private String typ;
+    
+    @NotBlank(message = "Imię jest wymagane")
+    @Size(max = 50, message = "Imię może mieć maksymalnie 50 znaków")
     private String imie;
+    
+    @NotBlank(message = "Nazwisko jest wymagane")
+    @Size(max = 50, message = "Nazwisko może mieć maksymalnie 50 znaków")
     private String nazwisko;
 
     // Nowe pole tytul (opcjonalne)
+    @Size(max = 200, message = "Tytuł może mieć maksymalnie 200 znaków")
     private String tytul;
 
+    @NotNull(message = "Status jest wymagany")
     @Enumerated(EnumType.STRING)
     private ZgloszenieStatus status;   // Możesz domyślnie ustawić NOWE / OPEN jeśli enum to przewiduje
 
+    // Nowe pole priorytet z domyślną wartością NORMALNY
+    @NotNull(message = "Priorytet jest wymagany")
+    @Enumerated(EnumType.STRING)
+    private ZgloszeniePriorytet priorytet = ZgloszeniePriorytet.NORMALNY;
+
+    @NotBlank(message = "Opis jest wymagany")
+    @Size(min = 10, max = 2000, message = "Opis musi mieć od 10 do 2000 znaków")
     @Column(length = 2000)
     private String opis;
 
@@ -48,6 +70,11 @@ public class Zgloszenie {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autor_id")
     private User autor;
+
+    // Placeholder for attachments relation (PR2 compatibility)
+    // Uncomment when Attachment entity is implemented:
+    // @OneToMany(mappedBy = "zgloszenie", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private List<Attachment> attachments = new ArrayList<>();
 
     // JPA lifecycle methods
     @PrePersist
@@ -104,6 +131,14 @@ public class Zgloszenie {
 
     public void setStatus(ZgloszenieStatus status) {
         this.status = status;
+    }
+
+    public ZgloszeniePriorytet getPriorytet() {
+        return priorytet;
+    }
+
+    public void setPriorytet(ZgloszeniePriorytet priorytet) {
+        this.priorytet = priorytet;
     }
 
     public String getOpis() {
