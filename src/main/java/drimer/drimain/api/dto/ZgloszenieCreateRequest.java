@@ -1,5 +1,6 @@
 package drimer.drimain.api.dto;
 
+import drimer.drimain.model.enums.ZgloszeniePriorytet;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -10,6 +11,7 @@ public class ZgloszenieCreateRequest {
     private String nazwisko;
     private String tytul; // New field
     private String status;
+    private ZgloszeniePriorytet priorytet = ZgloszeniePriorytet.NORMALNY; // New priority field with default
     private String opis;
     private LocalDateTime dataGodzina;
     private Long dzialId; // New field

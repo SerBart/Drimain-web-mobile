@@ -14,6 +14,7 @@ public final class ZgloszenieMapper {
         dto.setNazwisko(z.getNazwisko());
         dto.setTytul(z.getTytul());
         dto.setStatus(z.getStatus());
+        dto.setPriorytet(z.getPriorytet()); // Add priority mapping
         dto.setOpis(z.getOpis());
         dto.setDataGodzina(z.getDataGodzina());
         dto.setCreatedAt(z.getCreatedAt());
@@ -38,6 +39,7 @@ public final class ZgloszenieMapper {
         z.setNazwisko(dto.getNazwisko());
         z.setTytul(dto.getTytul());
         z.setStatus(dto.getStatus());
+        z.setPriorytet(dto.getPriorytet()); // Add priority mapping
         z.setOpis(dto.getOpis());
         z.setDataGodzina(dto.getDataGodzina());
         // Note: createdAt/updatedAt are managed by @PrePersist/@PreUpdate
