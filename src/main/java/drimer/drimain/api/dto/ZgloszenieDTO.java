@@ -2,6 +2,7 @@ package drimer.drimain.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import drimer.drimain.model.enums.ZgloszenieStatus;
+import drimer.drimain.model.enums.ZgloszeniePriorytet;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +18,7 @@ public class ZgloszenieDTO {
     private String nazwisko;
     private String tytul; // New field
     private ZgloszenieStatus status;
+    private ZgloszeniePriorytet priorytet; // New priority field
     private String opis;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
@@ -54,6 +56,9 @@ public class ZgloszenieDTO {
 
     public ZgloszenieStatus getStatus() { return status; }
     public void setStatus(ZgloszenieStatus status) { this.status = status; }
+
+    public ZgloszeniePriorytet getPriorytet() { return priorytet; }
+    public void setPriorytet(ZgloszeniePriorytet priorytet) { this.priorytet = priorytet; }
 
     public String getOpis() { return opis; }
     public void setOpis(String opis) { this.opis = opis; }
