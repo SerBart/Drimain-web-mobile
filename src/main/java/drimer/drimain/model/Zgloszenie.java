@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+
+import java.util.ArrayList;
+
 import java.util.List;
 
 /**
@@ -71,10 +74,10 @@ public class Zgloszenie {
     @JoinColumn(name = "autor_id")
     private User autor;
 
-    // Placeholder for attachments relation (PR2 compatibility)
-    // Uncomment when Attachment entity is implemented:
-    // @OneToMany(mappedBy = "zgloszenie", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // private List<Attachment> attachments = new ArrayList<>();
+
+    // Attachments relationship
+    @OneToMany(mappedBy = "zgloszenie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
 
     // JPA lifecycle methods
     @PrePersist
@@ -195,6 +198,24 @@ public class Zgloszenie {
 
     public void setAutor(User autor) {
         this.autor = autor;
+    }
+
+    public List<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<Attachment> attachments) {
+        this.attachments = attachments;
+    }
+
+    public void addAttachment(Attachment attachment) {
+        attachment.setZgloszenie(this);
+        this.attachments.add(attachment);
+    }
+
+    public void removeAttachment(Attachment attachment) {
+        attachment.setZgloszenie(null);
+        this.attachments.remove(attachment);
     }
 
     /**
