@@ -64,8 +64,7 @@
     <h2 class="login-title"><i class="fas fa-lock me-2"></i> Logowanie</h2>
 
     <!-- Komunikat błędu -->
-    <div th:if="${param.error}" class="error-message alert alert-danger">
-        Nieprawidłowy login lub hasło. Spróbuj ponownie!
+    <div th:if="${error}" class="error-message alert alert-danger" th:text="${error}">
     </div>
 
     <!-- Formularz -->
