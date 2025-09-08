@@ -1,0 +1,892 @@
+openapi: 3.0.3
+info:
+  title: Drimain Web Mobile API
+  description: API for Drimain maintenance reporting system
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Auth schemas
+    AuthRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "password"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-08-25T16:35:00Z"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ADMIN", "USER"]
+      example:
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkFETUlOIiwiVVNFUiJdLCJpYXQiOjE2OTM4MzA5MDAsImV4cCI6MTY5MzgzNDUwMH0.signature"
+        expiresAt: "2024-08-25T16:35:00Z"
+        roles: ["ADMIN", "USER"]
+
+    UserInfo:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ADMIN", "USER"]
+
+    # Simple DTOs
+    SimpleMaszynaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+
+    SimpleOsobaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        imie:
+          type: string
+        nazwisko:
+          type: string
+
+    PartUsage:
+      type: object
+      properties:
+        partId:
+          type: integer
+          format: int64
+        ilosc:
+          type: integer
+
+    # Raport schemas
+    Raport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maszyna:
+          $ref: '#/components/schemas/SimpleMaszynaDTO'
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        status:
+          type: string
+          enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        osoba:
+          $ref: '#/components/schemas/SimpleOsobaDTO'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+      example:
+        id: 1
+        maszyna:
+          id: 1
+          nazwa: "Maszyna CNC"
+        typNaprawy: "Naprawa prewencyjna"
+        opis: "Przegląd i wymiana filtrów"
+        status: "ZAKONCZONE"
+        dataNaprawy: "2024-08-25"
+        czasOd: "08:00"
+        czasDo: "12:00"
+        osoba:
+          id: 1
+          imie: "Jan"
+          nazwisko: "Kowalski"
+        partUsages:
+          - partId: 1
+            ilosc: 2
+
+    RaportCreateRequest:
+      type: object
+      properties:
+        maszynaId:
+          type: integer
+          format: int64
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        osobaId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportUpdateRequest:
+      type: object
+      properties:
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        status:
+          type: string
+          enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+        czasDo:
+          type: string
+        maszynaId:
+          type: integer
+          format: int64
+        osobaId:
+          type: integer
+          format: int64
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportStatus:
+      type: string
+      enum: [NOWY, W_TOKU, OCZEKUJE_CZESCI, ZAKONCZONE, ANULOWANE]
+
+    RaportPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Raport'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+            pageSize:
+              type: integer
+            sort:
+              type: object
+              properties:
+                sorted:
+                  type: boolean
+                empty:
+                  type: boolean
+                unsorted:
+                  type: boolean
+        last:
+          type: boolean
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          type: object
+          properties:
+            sorted:
+              type: boolean
+            empty:
+              type: boolean
+            unsorted:
+              type: boolean
+        empty:
+          type: boolean
+      example:
+        content:
+          - id: 1
+            maszyna:
+              id: 1
+              nazwa: "Maszyna CNC"
+            typNaprawy: "Naprawa prewencyjna"
+            opis: "Przegląd i wymiana filtrów"
+            status: "ZAKONCZONE"
+            dataNaprawy: "2024-08-25"
+            czasOd: "08:00"
+            czasDo: "12:00"
+            osoba:
+              id: 1
+              imie: "Jan"
+              nazwisko: "Kowalski"
+            partUsages: []
+        totalElements: 1
+        totalPages: 1
+        first: true
+        last: true
+        number: 0
+        size: 25
+        numberOfElements: 1
+        empty: false
+
+    # Part schemas
+    Part:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        ilosc:
+          type: integer
+        minIlosc:
+          type: integer
+        jednostka:
+          type: string
+
+    PartCreateRequest:
+      type: object
+      properties:
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        ilosc:
+          type: integer
+        minIlosc:
+          type: integer
+        jednostka:
+          type: string
+
+    PartUpdateRequest:
+      type: object
+      properties:
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        minIlosc:
+          type: integer
+        jednostka:
+          type: string
+
+    PartQuantityPatch:
+      oneOf:
+        - type: object
+          properties:
+            delta:
+              type: integer
+              description: "Relative change in quantity (+/-)"
+        - type: object
+          properties:
+            value:
+              type: integer
+              description: "Absolute value to set"
+
+    # Zgloszenie schemas (TODO: Implement if not yet in code)
+    Zgloszenie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+        hasPhoto:
+          type: boolean
+
+    ZgloszenieCreateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          type: string
+        opis:
+          type: string
+        photoBase64:
+          type: string
+          description: "Optional base64 encoded photo"
+
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        status:
+          type: string
+        opis:
+          type: string
+        photoBase64:
+          type: string
+          description: "Optional base64 encoded photo"
+
+    ZgloszenieStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, ON_HOLD, DONE, REJECTED]
+
+    # Error response
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+      example:
+        error: "Bad Request"
+        message: "Validation failed for request"
+        timestamp: "2024-08-25T15:35:00Z"
+        status: 400
+
+# Security applied globally except for specified endpoints
+security:
+  - BearerAuth: []
+
+paths:
+  # Health endpoint (public)
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      security: []  # Override global security - public endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  # Authentication endpoints
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      security: []  # Override global security - public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Bad credentials
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Bad credentials"
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user info
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid token"
+
+  # Raport endpoints
+  /api/raporty:
+    get:
+      tags:
+        - Raporty
+      summary: Get paginated list of raporty with filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/RaportStatus'
+        - name: maszynaId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: "Full text search query"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: "dataNaprawy,desc"
+      responses:
+        '200':
+          description: List of raporty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaportPage'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Raporty
+      summary: Create new raport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportCreateRequest'
+      responses:
+        '201':
+          description: Raport created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/raporty/{id}:
+    get:
+      tags:
+        - Raporty
+      summary: Get raport by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Raport details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Raport not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Raporty
+      summary: Update raport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportUpdateRequest'
+      responses:
+        '200':
+          description: Raport updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Raport not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Raporty
+      summary: Delete raport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Raport deleted
+        '404':
+          description: Raport not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # TODO: Placeholder endpoints for future implementation
+  /api/zgloszenia:
+    get:
+      tags:
+        - Zgloszenia
+      summary: Get list of zgloszenia (TODO - verify implementation)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ZgloszenieStatus'
+        - name: typ
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of zgloszenia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zgloszenie'
+
+    post:
+      tags:
+        - Zgloszenia
+      summary: Create new zgloszenie (TODO - verify implementation)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+      responses:
+        '201':
+          description: Zgloszenie created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+
+  /api/zgloszenia/{id}:
+    get:
+      tags:
+        - Zgloszenia
+      summary: Get zgloszenie by ID (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Zgloszenie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+
+    put:
+      tags:
+        - Zgloszenia
+      summary: Update zgloszenie (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Zgloszenie updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+
+    delete:
+      tags:
+        - Zgloszenia
+      summary: Delete zgloszenie (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Zgloszenie deleted
+
+  # TODO: Placeholder endpoints for czesci (parts) - verify existing implementation
+  /api/czesci:
+    get:
+      tags:
+        - Czesci
+      summary: Get list of parts (TODO - verify implementation)
+      parameters:
+        - name: kat
+          in: query
+          schema:
+            type: string
+          description: "Category filter"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: "Search query"
+        - name: belowMin
+          in: query
+          schema:
+            type: boolean
+          description: "Filter parts below minimum quantity"
+      responses:
+        '200':
+          description: List of parts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Part'
+
+    post:
+      tags:
+        - Czesci
+      summary: Create new part (TODO - verify implementation)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreateRequest'
+      responses:
+        '201':
+          description: Part created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+
+  /api/czesci/{id}:
+    get:
+      tags:
+        - Czesci
+      summary: Get part by ID (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Part details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+
+    put:
+      tags:
+        - Czesci
+      summary: Update part (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartUpdateRequest'
+      responses:
+        '200':
+          description: Part updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+
+    delete:
+      tags:
+        - Czesci
+      summary: Delete part (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Part deleted
+
+  /api/czesci/{id}/ilosc:
+    patch:
+      tags:
+        - Czesci
+      summary: Adjust part quantity (TODO - verify implementation)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartQuantityPatch'
+      responses:
+        '200':
+          description: Part quantity adjusted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
