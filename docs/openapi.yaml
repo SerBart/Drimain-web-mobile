@@ -1,0 +1,947 @@
+openapi: 3.0.3
+info:
+  title: DriMain API
+  description: API for DriMain application - machine maintenance and parts management system
+  version: 1.0.0
+  contact:
+    name: DriMain Team
+    email: support@drimain.com
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.drimain.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number (0-based)
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    SizeParam:
+      name: size
+      in: query
+      description: Page size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortParam:
+      name: sort
+      in: query
+      description: Sort criteria (field,direction)
+      schema:
+        type: string
+        example: "id,desc"
+
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          format: password
+          example: "password123"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ROLE_ADMIN", "ROLE_USER"]
+
+    UserInfo:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["ROLE_ADMIN", "ROLE_USER"]
+
+    SimpleMaszynaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+          example: "Tokarka CNC-1"
+
+    SimpleOsobaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        imieNazwisko:
+          type: string
+          example: "Jan Kowalski"
+
+    RaportStatus:
+      type: string
+      enum:
+        - NOWY
+        - W_TOKU
+        - OCZEKUJE_CZESCI
+        - ZAKONCZONE
+        - ANULOWANE
+
+    Raport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maszyna:
+          $ref: '#/components/schemas/SimpleMaszynaDTO'
+        typNaprawy:
+          type: string
+          example: "Naprawa silnika"
+        opis:
+          type: string
+          example: "Wymiana paska klinowego"
+        status:
+          $ref: '#/components/schemas/RaportStatus'
+        dataNaprawy:
+          type: string
+          format: date
+          example: "2024-01-15"
+        czasOd:
+          type: string
+          example: "08:00"
+        czasDo:
+          type: string
+          example: "12:00"
+        osoba:
+          $ref: '#/components/schemas/SimpleOsobaDTO'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportCreateRequest:
+      type: object
+      required:
+        - typNaprawy
+        - dataNaprawy
+      properties:
+        maszynaId:
+          type: integer
+          format: int64
+        typNaprawy:
+          type: string
+          example: "Naprawa silnika"
+        opis:
+          type: string
+          example: "Wymiana paska klinowego"
+        osobaId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/RaportStatus'
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "08:00"
+        czasDo:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          example: "12:00"
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportUpdateRequest:
+      type: object
+      properties:
+        maszynaId:
+          type: integer
+          format: int64
+        typNaprawy:
+          type: string
+        opis:
+          type: string
+        osobaId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/RaportStatus'
+        dataNaprawy:
+          type: string
+          format: date
+        czasOd:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        czasDo:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        partUsages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartUsage'
+
+    RaportPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Raport'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+            pageSize:
+              type: integer
+            sort:
+              type: object
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+
+    Part:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nazwa:
+          type: string
+          example: "Pasek klinowy A-1200"
+        kod:
+          type: string
+          example: "PKL-A1200"
+        kategoria:
+          type: string
+          example: "Paski"
+        ilosc:
+          type: integer
+          example: 5
+        minIlosc:
+          type: integer
+          example: 2
+        jednostka:
+          type: string
+          example: "szt"
+
+    PartCreateRequest:
+      type: object
+      required:
+        - nazwa
+        - kod
+      properties:
+        nazwa:
+          type: string
+          example: "Pasek klinowy A-1200"
+        kod:
+          type: string
+          example: "PKL-A1200"
+        kategoria:
+          type: string
+          example: "Paski"
+        ilosc:
+          type: integer
+          minimum: 0
+          example: 10
+        minIlosc:
+          type: integer
+          minimum: 0
+          example: 2
+        jednostka:
+          type: string
+          example: "szt"
+
+    PartUpdateRequest:
+      type: object
+      properties:
+        nazwa:
+          type: string
+        kod:
+          type: string
+        kategoria:
+          type: string
+        minIlosc:
+          type: integer
+          minimum: 0
+        jednostka:
+          type: string
+
+    PartQuantityPatch:
+      type: object
+      oneOf:
+        - properties:
+            delta:
+              type: integer
+              example: -2
+          required: [delta]
+        - properties:
+            value:
+              type: integer
+              minimum: 0
+              example: 10
+          required: [value]
+
+    PartUsage:
+      type: object
+      properties:
+        partId:
+          type: integer
+          format: int64
+        ilosc:
+          type: integer
+          example: 2
+
+    ZgloszenieStatus:
+      type: string
+      enum:
+        - OPEN
+        - IN_PROGRESS
+        - ON_HOLD
+        - DONE
+        - REJECTED
+
+    Zgloszenie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typ:
+          type: string
+          example: "Awaria maszyny"
+        imie:
+          type: string
+          example: "Jan"
+        nazwisko:
+          type: string
+          example: "Kowalski"
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+          example: "Maszyna nie startuje"
+        dataGodzina:
+          type: string
+          format: date-time
+          example: "2024-01-15T08:30:00"
+        hasPhoto:
+          type: boolean
+          example: false
+
+    ZgloszenieCreateRequest:
+      type: object
+      required:
+        - typ
+        - imie
+        - nazwisko
+        - opis
+      properties:
+        typ:
+          type: string
+          example: "Awaria maszyny"
+        imie:
+          type: string
+          example: "Jan"
+        nazwisko:
+          type: string
+          example: "Kowalski"
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+          example: "Maszyna nie startuje"
+        dataGodzina:
+          type: string
+          format: date-time
+          example: "2024-01-15T08:30:00"
+
+    ZgloszenieUpdateRequest:
+      type: object
+      properties:
+        typ:
+          type: string
+        imie:
+          type: string
+        nazwisko:
+          type: string
+        status:
+          $ref: '#/components/schemas/ZgloszenieStatus'
+        opis:
+          type: string
+        dataGodzina:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T08:30:00Z"
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "Bad Request"
+        message:
+          type: string
+          example: "Invalid input parameters"
+        path:
+          type: string
+          example: "/api/raporty"
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Check if the application is running
+      security: []
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user info
+      description: Get information about the currently authenticated user
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/raporty:
+    get:
+      tags:
+        - Reports
+      summary: List all reports
+      description: Get a paginated list of maintenance reports
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          description: Filter by report status
+          schema:
+            $ref: '#/components/schemas/RaportStatus'
+      responses:
+        '200':
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaportPage'
+
+    post:
+      tags:
+        - Reports
+      summary: Create new report
+      description: Create a new maintenance report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportCreateRequest'
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/raporty/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Get report by ID
+      description: Get a specific maintenance report by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Reports
+      summary: Update report
+      description: Update an existing maintenance report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaportUpdateRequest'
+      responses:
+        '200':
+          description: Report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Raport'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Reports
+      summary: Delete report
+      description: Delete a maintenance report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Report deleted successfully
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/czesci:
+    get:
+      tags:
+        - Parts
+      summary: List all parts
+      description: Get a list of parts with optional filtering
+      parameters:
+        - name: kat
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Search query for part name
+          schema:
+            type: string
+        - name: belowMin
+          in: query
+          description: Filter parts below minimum quantity
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of parts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Part'
+
+    post:
+      tags:
+        - Parts
+      summary: Create new part
+      description: Add a new part to inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreateRequest'
+      responses:
+        '201':
+          description: Part created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/czesci/{id}:
+    get:
+      tags:
+        - Parts
+      summary: Get part by ID
+      description: Get a specific part by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Part details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Parts
+      summary: Update part
+      description: Update an existing part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartUpdateRequest'
+      responses:
+        '200':
+          description: Part updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Parts
+      summary: Delete part
+      description: Delete a part from inventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Part deleted successfully
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/czesci/{id}/ilosc:
+    patch:
+      tags:
+        - Parts
+      summary: Adjust part quantity
+      description: Adjust the quantity of a part (delta or absolute value)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartQuantityPatch'
+      responses:
+        '200':
+          description: Quantity adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/zgloszenia:
+    get:
+      tags:
+        - Issues
+      summary: List all issues
+      description: |
+        Get a list of maintenance issues/reports.
+        TODO: Add pagination support for zgloszenia endpoint.
+      parameters:
+        - name: status
+          in: query
+          description: Filter by issue status
+          schema:
+            $ref: '#/components/schemas/ZgloszenieStatus'
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zgloszenie'
+
+    post:
+      tags:
+        - Issues
+      summary: Create new issue
+      description: Create a new maintenance issue/report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieCreateRequest'
+      responses:
+        '201':
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/zgloszenia/{id}:
+    get:
+      tags:
+        - Issues
+      summary: Get issue by ID
+      description: Get a specific maintenance issue by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Issues
+      summary: Update issue
+      description: Update an existing maintenance issue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZgloszenieUpdateRequest'
+      responses:
+        '200':
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zgloszenie'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Issues
+      summary: Delete issue
+      description: Delete a maintenance issue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Issue deleted successfully
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Health
+    description: Application health endpoints
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Reports
+    description: Maintenance report management
+  - name: Parts
+    description: Parts inventory management
+  - name: Issues
+    description: Issue/incident reporting and tracking
