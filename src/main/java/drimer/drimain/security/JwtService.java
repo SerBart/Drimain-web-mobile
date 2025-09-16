@@ -54,7 +54,7 @@ public class JwtService {
             } else if (!isBlank(plainSecret)) {
                 log.debug("Initializing JWT key from plain property 'jwt.secret.plain'");
                 keyBytes = plainSecret.getBytes(StandardCharsets.UTF_8);
-            } else if (allowMissingInDev && environment.acceptsProfiles(Profiles.of("dev", "postgres", "test-jwt"))) {
+            } else if (allowMissingInDev && environment.acceptsProfiles(Profiles.of("dev", "postgres"))) {
                 // Developer-friendly fallback for dev/postgres profiles
                 log.warn("No JWT secret provided, but jwt.allow-missing-in-dev=true and active profile is dev-like. " +
                          "Generating random in-memory HMAC secret for this run. " +
