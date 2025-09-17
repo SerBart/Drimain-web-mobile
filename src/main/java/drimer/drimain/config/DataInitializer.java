@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 @Component
-@Order(10) // wykona się po ewentualnym @Order(1) RoleInitializer – jeśli kiedyś dodasz
+@Order(10) // Initialize roles and users
 public class DataInitializer implements ApplicationRunner {
 
     private final RoleRepository roleRepository;
@@ -31,8 +31,11 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
 
+        // Initialize all roles first
         Role adminRole = ensureRole("ROLE_ADMIN");
         Role userRole  = ensureRole("ROLE_USER");
+        ensureRole("ROLE_MAGAZYN");
+        ensureRole("ROLE_BIURO");
 
         // Użytkownik admin jeśli brak
         userRepository.findByUsername("admin").orElseGet(() -> {
