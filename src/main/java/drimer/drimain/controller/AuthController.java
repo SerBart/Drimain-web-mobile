@@ -1,8 +1,11 @@
 package drimer.drimain.controller;
 
+import drimer.drimain.api.dto.AuthRequest;
+import drimer.drimain.api.dto.AuthResponse;
+import drimer.drimain.api.dto.UserInfo;
 import drimer.drimain.security.JwtService;
 import drimer.drimain.service.CustomUserDetailsService;
-import lombok.Data;
+import io.jsonwebtoken.Claims;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,7 +13,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,46 +36,44 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
-        try {
-            Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
-            var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("roles", userDetails.getAuthorities()
-                    .stream().map(a -> a.getAuthority()).toList());
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+        var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+        Map<String, Object> claims = new HashMap<>();
+        List<String> roles = userDetails.getAuthorities()
+                .stream().map(a -> a.getAuthority()).toList();
+        claims.put("roles", roles);
 
-            String token = jwtService.generate(userDetails.getUsername(), claims);
-
-            return ResponseEntity.ok(new AuthResponse(token));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Bad credentials");
-        }
+        String token = jwtService.generate(userDetails.getUsername(), claims);
+        Instant expiresAt = Instant.now().plus(jwtService.getTtlMinutes(), ChronoUnit.MINUTES);
+        
+        AuthResponse response = new AuthResponse();
+        response.setToken(token);
+        response.setExpiresAt(expiresAt);
+        response.setRoles(roles);
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<UserInfo> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body("No token");
+            throw new AuthenticationException("No token provided") {};
         }
         String token = authHeader.substring(7);
         try {
-            String username = jwtService.extractUsername(token);
-            return ResponseEntity.ok(username);
+            Claims claims = jwtService.parseSigned(token).getPayload();
+            String username = claims.getSubject();
+            @SuppressWarnings("unchecked")
+            List<String> roles = (List<String>) claims.get("roles");
+            if (roles == null) {
+                roles = List.of();
+            }
+            return ResponseEntity.ok(new UserInfo(username, roles));
         } catch (Exception ex) {
-            return ResponseEntity.status(401).body("Invalid token");
+            throw new AuthenticationException("Invalid token") {};
         }
-    }
-
-    @Data
-    public static class AuthRequest {
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class AuthResponse {
-        private final String token;
     }
 }
